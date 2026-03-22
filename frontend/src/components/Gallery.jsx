@@ -6,16 +6,17 @@ const SKELETON_HEIGHTS = [220,300,190,340,260,210,250,310,185,270,230,200,320,28
 export default function Gallery({ photos, loading, likes, onCardClick, onLike, onHide, onLoadMore }) {
   const triggerRef = useRef(null)
 
-  // Infinite scroll via IntersectionObserver
+  // 사진 수가 바뀔 때마다 Observer 재등록
+  // → 트리거가 아직 화면에 보이면 즉시 발동해서 계속 채워줌
   useEffect(() => {
     if (!triggerRef.current) return
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting && !loading) onLoadMore() },
-      { rootMargin: '400px' }
+      ([entry]) => { if (entry.isIntersecting) onLoadMore() },
+      { rootMargin: '300px' }
     )
     obs.observe(triggerRef.current)
     return () => obs.disconnect()
-  }, [loading, onLoadMore])
+  }, [photos.length, onLoadMore])
 
   const showSkeletons = loading && photos.length === 0
 
