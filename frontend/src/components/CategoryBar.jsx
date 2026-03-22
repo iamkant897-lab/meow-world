@@ -45,18 +45,14 @@ export default function CategoryBar({ active, onChange }) {
     }
   }, [])
 
-  // PC: 마우스 휠로 가로 스크롤
-  function handleWheel(e) {
-    if (!innerRef.current) return
-    e.preventDefault()
-    innerRef.current.scrollBy({ left: e.deltaY || e.deltaX, behavior: 'smooth' })
-  }
+  function scrollLeft()  { innerRef.current?.scrollBy({ left: -200, behavior: 'smooth' }) }
+  function scrollRight() { innerRef.current?.scrollBy({ left:  200, behavior: 'smooth' }) }
 
   return (
     <div className="category-bar">
-      {canLeft  && <div className="cat-fade cat-fade-left"  />}
-      {canRight && <div className="cat-fade cat-fade-right" />}
-      <div className="category-inner" ref={innerRef} onWheel={handleWheel}>
+      {canLeft  && <><div className="cat-fade cat-fade-left"  /><button className="cat-arrow cat-arrow-left"  onClick={scrollLeft}>‹</button></>}
+      {canRight && <><div className="cat-fade cat-fade-right" /><button className="cat-arrow cat-arrow-right" onClick={scrollRight}>›</button></>}
+      <div className="category-inner" ref={innerRef}>
         {CATEGORIES.map(c => (
           <button
             key={c.id}
