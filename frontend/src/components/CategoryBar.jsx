@@ -1,5 +1,6 @@
 export const CATEGORIES = [
   { id: 'all',  label: '🐱 전체'          },
+  { id: 'gif',  label: '🎬 움짤'          },
   { id: 'ragd', label: '🤍 랙돌'          },
   { id: 'mcoo', label: '🦁 메인쿤'        },
   { id: 'munc', label: '🐾 먼치킨'        },
@@ -7,7 +8,6 @@ export const CATEGORIES = [
   { id: 'sibe', label: '❄️ 시베리안'      },
   { id: 'bali', label: '🌸 발리니즈'      },
   { id: 'birm', label: '✨ 버만'          },
-  { id: 'gif',  label: '🎬 움짤'         },
 ]
 
 export default function CategoryBar({ active, onChange }) {
