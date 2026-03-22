@@ -160,7 +160,9 @@ body {
 }
 .stats strong { color: var(--pink2); }
 
-.masonry { columns: 5 200px; column-gap: 12px; }
+/* 컬럼을 직접 나눠서 새 사진이 추가돼도 기존 사진이 안 움직임 */
+.masonry-cols { display: flex; gap: 12px; align-items: flex-start; }
+.masonry-col  { flex: 1; display: flex; flex-direction: column; gap: 12px; }
 
 /* ── MOBILE ────────────────────────────────────── */
 @media (max-width: 600px) {
@@ -181,7 +183,8 @@ body {
   .card-hide { opacity: 1; width: 30px; height: 30px; font-size: .74rem; }
 
   /* 갤러리 */
-  .masonry { columns: 2 140px; column-gap: 8px; }
+  .masonry-cols { gap: 8px; }
+  .masonry-col  { gap: 8px; }
   .gallery-wrap { padding: 8px 8px 60px; }
 
   /* 모달 */
@@ -208,7 +211,6 @@ body {
 
 /* ── CARD ──────────────────────────────────────── */
 .card {
-  break-inside: avoid; margin-bottom: 12px;
   border-radius: var(--radius); overflow: hidden;
   background: var(--surface);
   border: 1.5px solid var(--border);
