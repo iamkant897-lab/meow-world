@@ -60,6 +60,30 @@ function shuffle(arr) {
   return a
 }
 
+// 사진 a[], 움짤 b[] 를 p,g,p,g,... 순서로 섞기
+function interleave(a, b) {
+  const result = []
+  const max = Math.max(a.length, b.length)
+  for (let i = 0; i < max; i++) {
+    if (i < a.length) result.push(a[i])
+    if (i < b.length) result.push(b[i])
+  }
+  return result
+}
+
+// 중복제거 + 제외 품종 필터
+function dedupFilter(arr) {
+  const seen = new Set()
+  const out  = []
+  for (const p of arr) {
+    if (seen.has(p.id)) continue
+    if (isExcluded(p.breed)) continue
+    seen.add(p.id)
+    out.push(p)
+  }
+  return out
+}
+
 function normalize(i) {
   return {
     id:    'ca_' + i.id,
@@ -102,34 +126,46 @@ export function usePhotos(category = 'all') {
 
   // ── fetch & filter ────────────────────────────
   const fetchPhotos = useCallback(async (cat) => {
-    let batches
     if (cat === 'kitten') {
-      batches = await Promise.all(KITTEN_BREEDS.map(b => fetchCatAPI(20, b)))
-    } else if (cat === 'gif') {
-      batches = await Promise.all([
-        fetchCatAPI(20, null, 'gif', false),
-        fetchCatAPI(20, null, 'gif', false),
-      ])
-    } else if (cat === 'all') {
-      const preferred = getPreferredBreedIds()
-      const base = [fetchCatAPI(50, null), fetchCatAPI(50, null)]
-      const pref = preferred.map(id => fetchCatAPI(40, id))
-      const gifs = [fetchCatAPI(10, null, 'gif', false)]
-      batches = await Promise.all([...base, ...pref, ...gifs])
-    } else {
-      const breedId = BREED_IDS[cat] || null
-      batches = await Promise.all([fetchCatAPI(50, breedId), fetchCatAPI(50, breedId)])
+      const batches = await Promise.all(KITTEN_BREEDS.map(b => fetchCatAPI(20, b)))
+      return dedupFilter(shuffle(batches.flat()))
     }
 
-    const seen = new Set()
-    const out  = []
-    for (const p of shuffle(batches.flat())) {
-      if (seen.has(p.id)) continue
-      if (isExcluded(p.breed)) continue
-      seen.add(p.id)
-      out.push(p)
+    if (cat === 'gif') {
+      // 품종 있는 GIF 우선, 부족하면 아무 GIF로 보충
+      const batches = await Promise.all([
+        fetchCatAPI(50, null, 'gif', true),   // 품종 있는 GIF
+        fetchCatAPI(50, null, 'gif', true),
+        fetchCatAPI(30, null, 'gif', false),  // 품종 없어도 보충
+        fetchCatAPI(30, null, 'gif', false),
+      ])
+      return dedupFilter(shuffle(batches.flat()))
     }
-    return out
+
+    if (cat === 'all') {
+      const preferred = getPreferredBreedIds()
+      // 사진, 움짤 동시 fetch
+      const [photoResults, gifResults] = await Promise.all([
+        Promise.all([
+          fetchCatAPI(50, null),
+          fetchCatAPI(50, null),
+          ...preferred.map(id => fetchCatAPI(30, id)),
+        ]),
+        Promise.all([
+          fetchCatAPI(40, null, 'gif', true),   // 품종 있는 GIF
+          fetchCatAPI(40, null, 'gif', false),  // 아무 GIF
+        ]),
+      ])
+      const photos = dedupFilter(shuffle(photoResults.flat()))
+      const gifs   = dedupFilter(shuffle(gifResults.flat()))
+      // 사진:움짤 = 1:1 교대 배치
+      return interleave(photos, gifs)
+    }
+
+    // 개별 품종 탭
+    const breedId = BREED_IDS[cat] || null
+    const batches = await Promise.all([fetchCatAPI(50, breedId), fetchCatAPI(50, breedId)])
+    return dedupFilter(shuffle(batches.flat()))
   }, [])
 
   // 버퍼 보충 (백그라운드)
