@@ -1,0 +1,19 @@
+{
+  "name": "meow-world-backend",
+  "version": "1.0.0",
+  "description": "냥월드 백엔드 API 서버",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-cache": "^5.1.2",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

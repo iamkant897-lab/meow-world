@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐱 냥월드 - 전세계 실시간 냥월드</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:       #0d0b1e;
+      --surface:  #1a1730;
+      --surface2: #231f3a;
+      --pink:     #ff6b9d;
+      --purple:   #c77dff;
+      --yellow:   #ffd93d;
+      --text:     #f0eeff;
+      --muted:    #9b96c4;
+      --radius:   14px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #1a1730, #2d1b4e);
+      border-bottom: 1px solid rgba(199,125,255,.2);
+      padding: 14px 24px;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-inner {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { font-size: 2rem; animation: float 3s ease-in-out infinite; }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-5px); }
+    }
+    .logo-text {
+      font-size: 1.5rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .logo-sub { font-size: .7rem; color: var(--muted); font-weight: 600; }
+    .header-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .refresh-info {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: .8rem; font-weight: 700;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #4ade80; animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+    .btn {
+      padding: 9px 18px; border-radius: 50px; border: none;
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .85rem;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-grad {
+      background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff;
+    }
+    .btn-grad:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(255,107,157,.4); }
+    .btn-outline {
+      background: transparent; border: 2px solid rgba(199,125,255,.4); color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--purple); background: rgba(199,125,255,.1); }
+
+    /* ── CATEGORY BAR ── */
+    .cat-bar {
+      background: var(--surface);
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      padding: 10px 24px;
+      position: sticky; top: 65px; z-index: 99;
+    }
+    .cat-inner {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    }
+    .cat-inner::-webkit-scrollbar { display: none; }
+    .cat-btn {
+      padding: 6px 16px; border-radius: 50px; white-space: nowrap;
+      border: 2px solid rgba(255,255,255,.1); background: transparent;
+      color: var(--muted); font-family: 'Nunito',sans-serif;
+      font-weight: 700; font-size: .82rem; cursor: pointer; transition: all .2s;
+    }
+    .cat-btn:hover { border-color: rgba(199,125,255,.4); color: var(--text); }
+    .cat-btn.active {
+      background: linear-gradient(135deg,rgba(255,107,157,.2),rgba(199,125,255,.2));
+      border-color: var(--purple); color: var(--text);
+    }
+
+    /* ── GALLERY ── */
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 16px 16px 60px; }
+    .stats { color: var(--muted); font-size: .85rem; font-weight: 700; margin-bottom: 12px; }
+    .stats strong { color: var(--pink); }
+
+    .masonry { columns: 5 200px; column-gap: 12px; }
+    @media(max-width:500px){ .masonry{ columns: 2 140px; column-gap: 8px; } }
+
+    /* ── CARD ── */
+    .card {
+      break-inside: avoid; margin-bottom: 12px;
+      border-radius: var(--radius); overflow: hidden;
+      background: var(--surface2); cursor: pointer; position: relative;
+      transition: transform .25s, box-shadow .25s;
+      animation: fadeUp .4s ease both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 16px 48px rgba(0,0,0,.6); }
+    .card img { width: 100%; display: block; object-fit: cover; }
+    .card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 55%);
+      opacity: 0; transition: opacity .25s;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 12px;
+    }
+    .card:hover .card-overlay { opacity: 1; }
+    .card-breed { color: #fff; font-size: .78rem; font-weight: 700; }
+    .card-like {
+      position: absolute; top: 8px; right: 8px;
+      width: 30px; height: 30px; border-radius: 50%;
+      border: none; background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
+      font-size: .95rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s; opacity: 0;
+    }
+    .card:hover .card-like { opacity: 1; }
+    .card-like.liked { background: rgba(255,107,157,.8); opacity: 1; }
+    .card-like:hover { transform: scale(1.2); }
+
+    /* ── LOADER ── */
+    .loader-wrap { display: flex; justify-content: center; padding: 30px; gap: 8px; }
+    .ld { width: 10px; height: 10px; border-radius: 50%; animation: bounce 1.2s ease infinite; }
+    .ld:nth-child(1){background:var(--pink)}
+    .ld:nth-child(2){background:var(--purple);animation-delay:.2s}
+    .ld:nth-child(3){background:var(--yellow);animation-delay:.4s}
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+    /* ── NEW BANNER ── */
+    #new-banner {
+      position: fixed; top: 130px; left: 50%;
+      transform: translateX(-50%) translateY(-120px);
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      color: #fff; padding: 11px 22px; border-radius: 50px;
+      font-weight: 800; font-size: .88rem; cursor: pointer; z-index: 200;
+      transition: transform .4s cubic-bezier(.175,.885,.32,1.275);
+      box-shadow: 0 8px 32px rgba(255,107,157,.4);
+    }
+    #new-banner.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── MODAL ── */
+    #backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.9);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; z-index: 500;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+      backdrop-filter: blur(12px);
+    }
+    #backdrop.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border-radius: 22px; border: 1px solid rgba(255,255,255,.1);
+      max-width: 860px; width: 100%; max-height: 90vh; overflow-y: auto;
+      transform: scale(.9); transition: transform .3s;
+    }
+    #backdrop.open .modal { transform: scale(1); }
+    .modal img { width: 100%; max-height: 60vh; object-fit: contain; background: #000; border-radius: 22px 22px 0 0; }
+    .modal-body { padding: 18px 22px; }
+    .modal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .modal-title { font-size: 1rem; font-weight: 800; }
+    .modal-close {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.1); color: #fff;
+      font-size: 1.1rem; cursor: pointer; transition: all .2s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,.2); }
+    .modal-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tag {
+      padding: 4px 12px; border-radius: 20px;
+      background: rgba(255,255,255,.08); font-size: .78rem;
+      font-weight: 600; color: var(--muted);
+    }
+    .modal-btns { display: flex; gap: 8px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 50px; padding: 11px 22px;
+      font-weight: 700; font-size: .88rem; z-index: 900;
+      transition: transform .3s; display: flex; align-items: center; gap: 8px;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── SCROLL TOP ── */
+    #scroll-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border: none; color: #fff; font-size: 1.1rem; cursor: pointer;
+      opacity: 0; pointer-events: none; transition: all .3s; z-index: 300;
+    }
+    #scroll-top.show { opacity: 1; pointer-events: all; }
+    #scroll-top:hover { transform: scale(1.1); }
+
+    /* ── SKELETON ── */
+    .skel {
+      break-inside: avoid; margin-bottom: 12px;
+      border-radius: var(--radius); background: var(--surface2);
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+    @keyframes shimmer { 0%,100%{opacity:.4} 50%{opacity:.8} }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🐱</span>
+      <div>
+        <div class="logo-text">냥월드</div>
+        <div class="logo-sub">전세계 실시간 냥월드</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="refresh-info">
+        <span class="dot"></span>
+        <span id="cd-text">60초 후 업데이트</span>
+      </div>
+      <button class="btn btn-outline" onclick="refreshAll()">🔄 새로고침</button>
+      <button class="btn btn-grad"    onclick="randomCat()">🎲 랜덤 냥이</button>
+    </div>
+  </div>
+</header>
+
+<!-- CATEGORY BAR -->
+<div class="cat-bar">
+  <div class="cat-inner" id="cat-bar"></div>
+</div>
+
+<!-- GALLERY -->
+<div class="wrap">
+  <div class="stats">총 <strong id="total">0</strong>장의 고양이 사진</div>
+  <div class="masonry" id="gallery"></div>
+  <div id="loader" class="loader-wrap">
+    <div class="ld"></div><div class="ld"></div><div class="ld"></div>
+  </div>
+</div>
+
+<!-- NEW BANNER -->
+<div id="new-banner" onclick="showPending()">🐱 새 사진 <span id="new-cnt">0</span>장 도착!</div>
+
+<!-- MODAL -->
+<div id="backdrop" onclick="backdropClick(event)">
+  <div class="modal">
+    <img id="m-img" src="" alt="">
+    <div class="modal-body">
+      <div class="modal-top">
+        <div class="modal-title" id="m-title"></div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-tags" id="m-tags"></div>
+      <div class="modal-btns">
+        <button class="btn btn-grad"    id="m-like"  onclick="modalLike()">❤️ 좋아요</button>
+        <button class="btn btn-outline" id="m-open"  onclick="modalOpen()">🔗 원본 보기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="t-ico"></span><span id="t-msg"></span>
+</div>
+
+<!-- SCROLL TOP -->
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────
+const API_KEY = 'live_24rszkvopcd0OJ1ucmgPLf6xIMBWfXf26X8xOteZ64qZ8vm8EpJ57XfVM651ce4p'
+
+const CATEGORIES = [
+  { id: 'all',   label: '🐱 전체'           },
+  { id: 'munc',  label: '🐾 먼치킨'         },
+  { id: 'pers',  label: '😺 페르시안'       },
+  { id: 'rblu',  label: '💙 러시안블루'     },
+  { id: 'beng',  label: '🐆 벵갈'           },
+  { id: 'ragd',  label: '🤍 랙돌'           },
+  { id: 'mcoo',  label: '🦁 메인쿤'         },
+  { id: 'siam',  label: '👁️ 샴'             },
+  { id: 'bsho',  label: '🐈 브리티시숏헤어' },
+  { id: 'sfol',  label: '🏴 스코티시폴드'   },
+  { id: 'abys',  label: '🟤 아비시니안'     },
+  { id: 'liked', label: '❤️ 좋아요'        },
+]
+
+const BREED_MAP = {
+  munc:'munc', pers:'pers', rblu:'rblu', beng:'beng',
+  ragd:'ragd', mcoo:'mcoo', siam:'siam', bsho:'bsho',
+  sfol:'sfol', abys:'abys',
+}
+
+// ── STATE ──────────────────────────────────────────
+let photos     = []
+let pending    = []
+let likes      = JSON.parse(localStorage.getItem('nyang_likes') || '{}')
+let category   = 'all'
+let loading    = false
+let countdown  = 60
+let modalPhoto = null
+let toastTimer = null
+let seenIds    = new Set()
+
+// ── API ────────────────────────────────────────────
+async function fetchCats(limit = 50, breedId = null) {
+  const bp  = breedId ? `&breed_ids=${breedId}` : ''
+  const res = await fetch(
+    `https://api.thecatapi.com/v1/images/search?limit=${limit}&order=RAND${bp}&api_key=${API_KEY}`
+  )
+  const data = await res.json()
+  return (Array.isArray(data) ? data : []).map(i => ({
+    id:    i.id,
+    url:   i.url,
+    breed: i.breeds?.[0]?.name || null,
+    title: i.breeds?.[0]?.name ? i.breeds[0].name + ' 고양이' : '귀여운 고양이',
+    w:     i.width  || 500,
+    h:     i.height || 400,
+  }))
+}
+
+// ── LOAD ───────────────────────────────────────────
+async function load(isInitial = false) {
+  if (loading) return
+  loading = true
+  if (isInitial) showSkeleton()
+
+  try {
+    const breedId = BREED_MAP[category] || null
+    const [b1, b2] = await Promise.all([fetchCats(50, breedId), fetchCats(50, breedId)])
+    const fresh = []
+    for (const p of shuffle([...b1, ...b2])) {
+      if (!seenIds.has(p.id)) { seenIds.add(p.id); fresh.push(p) }
+    }
+    photos = isInitial ? fresh : [...photos, ...fresh]
+    render()
+  } catch(e) {
+    console.error(e)
+  } finally {
+    loading = false
+  }
+}
+
+async function refreshAll() {
+  photos = []; pending = []; seenIds = new Set()
+  countdown = 60
+  hideBanner()
+  await load(true)
+  toast('🔄', '새로운 고양이들을 불러왔어요!')
+}
+
+// ── RENDER ─────────────────────────────────────────
+function render() {
+  const list = category === 'liked' ? photos.filter(p => likes[p.id]) : photos
+  document.getElementById('gallery').innerHTML = list.map((p, i) => cardHtml(p, i)).join('')
+  document.getElementById('total').textContent = list.length.toLocaleString()
+}
+
+function cardHtml(p, i) {
+  const delay = Math.min(i * 25, 500)
+  const liked = !!likes[p.id]
+  return `<div class="card" style="animation-delay:${delay}ms" data-id="${p.id}" onclick="openModal('${p.id}')">
+    <img src="${p.url}" alt="${esc(p.title)}" loading="lazy" onerror="this.closest('.card').remove()">
+    <div class="card-overlay">
+      ${p.breed ? `<div class="card-breed">🐱 ${esc(p.breed)}</div>` : ''}
+    </div>
+    <button class="card-like ${liked ? 'liked' : ''}"
+            onclick="event.stopPropagation();cardLike('${p.id}',this)">
+      ${liked ? '❤️' : '🤍'}
+    </button>
+  </div>`
+}
+
+function showSkeleton() {
+  const heights = [220,300,180,260,200,280,240,190,310,260,200,240,280,190,260]
+  document.getElementById('gallery').innerHTML =
+    heights.map(h => `<div class="skel" style="height:${h}px"></div>`).join('')
+}
+
+// ── INFINITE SCROLL ────────────────────────────────
+new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !loading) load()
+}, { rootMargin: '400px' }).observe(document.getElementById('loader'))
+
+// ── LIKES ──────────────────────────────────────────
+function cardLike(id, btn) {
+  toggleLike(id)
+  btn.classList.toggle('liked', !!likes[id])
+  btn.textContent = likes[id] ? '❤️' : '🤍'
+  if (category === 'liked') render()
+}
+
+function toggleLike(id) {
+  if (likes[id]) { delete likes[id]; toast('💔', '좋아요를 취소했어요') }
+  else           { likes[id] = true;  toast('❤️', '좋아요! 귀엽죠? 🐱') }
+  localStorage.setItem('nyang_likes', JSON.stringify(likes))
+}
+
+// ── MODAL ──────────────────────────────────────────
+function openModal(id) {
+  const p = photos.find(x => x.id === id)
+  if (!p) return
+  modalPhoto = p
+  document.getElementById('m-img').src = p.url
+  document.getElementById('m-title').textContent = p.title
+  document.getElementById('m-tags').innerHTML =
+    (p.breed ? `<span class="tag">🐱 ${esc(p.breed)}</span>` : '') +
+    `<span class="tag">📐 ${p.w}×${p.h}</span>`
+  document.getElementById('m-like').textContent = likes[p.id] ? '❤️ 좋아요 취소' : '❤️ 좋아요'
+  document.getElementById('backdrop').classList.add('open')
+  document.body.style.overflow = 'hidden'
+}
+
+function closeModal() {
+  document.getElementById('backdrop').classList.remove('open')
+  document.body.style.overflow = ''
+  modalPhoto = null
+}
+
+function backdropClick(e) { if (e.target.id === 'backdrop') closeModal() }
+
+function modalLike() {
+  if (!modalPhoto) return
+  toggleLike(modalPhoto.id)
+  document.getElementById('m-like').textContent = likes[modalPhoto.id] ? '❤️ 좋아요 취소' : '❤️ 좋아요'
+}
+
+function modalOpen() { if (modalPhoto) window.open(modalPhoto.url, '_blank') }
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal() })
+
+// ── RANDOM CAT ─────────────────────────────────────
+async function randomCat() {
+  toast('🎲', '랜덤 냥이 불러오는 중...')
+  try {
+    const [p] = await fetchCats(1)
+    if (!photos.find(x => x.id === p.id)) { photos.unshift(p); seenIds.add(p.id) }
+    openModal(p.id)
+  } catch { toast('😿', '불러오지 못했어요') }
+}
+
+// ── AUTO-REFRESH ───────────────────────────────────
+setInterval(async () => {
+  countdown--
+  document.getElementById('cd-text').textContent = countdown + '초 후 업데이트'
+  if (countdown <= 0) {
+    countdown = 60
+    try {
+      const breedId = BREED_MAP[category] || null
+      const fresh   = await fetchCats(20, breedId)
+      const newOnes = fresh.filter(p => !seenIds.has(p.id))
+      if (newOnes.length > 0) {
+        newOnes.forEach(p => seenIds.add(p.id))
+        pending = [...newOnes, ...pending]
+        document.getElementById('new-cnt').textContent = pending.length
+        document.getElementById('new-banner').classList.add('show')
+      }
+    } catch {}
+  }
+}, 1000)
+
+function showPending() {
+  photos = [...pending, ...photos]
+  pending = []
+  hideBanner()
+  render()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function hideBanner() {
+  document.getElementById('new-banner').classList.remove('show')
+}
+
+// ── CATEGORY BAR ───────────────────────────────────
+document.getElementById('cat-bar').innerHTML = CATEGORIES.map(c =>
+  `<button class="cat-btn ${c.id === 'all' ? 'active' : ''}"
+           onclick="setCategory('${c.id}',this)">${c.label}</button>`
+).join('')
+
+function setCategory(id, btn) {
+  category = id
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  if (id === 'liked') { render(); return }
+  photos = []; seenIds = new Set(); pending = []; hideBanner()
+  load(true)
+}
+
+// ── TOAST ──────────────────────────────────────────
+function toast(ico, msg) {
+  document.getElementById('t-ico').textContent = ico
+  document.getElementById('t-msg').textContent = msg
+  const el = document.getElementById('toast')
+  el.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500)
+}
+
+// ── SCROLL TOP ─────────────────────────────────────
+window.addEventListener('scroll', () =>
+  document.getElementById('scroll-top').classList.toggle('show', window.scrollY > 500)
+)
+
+// ── UTILS ──────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+// ── INIT ───────────────────────────────────────────
+load(true)
+</script>
+</body>
+</html>
