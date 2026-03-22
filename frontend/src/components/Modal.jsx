@@ -39,11 +39,13 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
     }
   }
 
-  // 사진 저장 — 기기 갤러리에 저장 후 카톡 등에서 직접 공유 가능
+  // 사진 저장 — 서버 프록시로 CORS 우회 후 원탭 다운로드
   async function handleSave() {
     setSaving(true)
     try {
-      const res  = await fetch(photo.url)
+      const proxyUrl = `/api/image?url=${encodeURIComponent(photo.url)}`
+      const res  = await fetch(proxyUrl)
+      if (!res.ok) throw new Error('proxy error')
       const blob = await res.blob()
       const ext  = photo.isGif ? 'gif' : 'jpg'
       const blobUrl = URL.createObjectURL(blob)
@@ -55,26 +57,24 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
       document.body.removeChild(a)
       URL.revokeObjectURL(blobUrl)
     } catch {
-      // fetch 실패 시 새 탭에서 이미지 열기 (길게 눌러 저장 가능)
       window.open(photo.url, '_blank')
     } finally {
       setSaving(false)
     }
   }
 
-  // 사이트 링크 공유
+  // 링크 공유 — 현재 URL(사진 ID 해시 포함) 공유
+  // 받는 사람이 열면 해당 사진이 바로 모달로 뜸
   async function handleShare() {
+    const shareUrl = window.location.href
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: '🐱 냥월드',
-          url: 'https://meow-world.vercel.app',
-        })
+        await navigator.share({ title: '🐱 냥월드', url: shareUrl })
         return
       } catch {}
     }
     try {
-      await navigator.clipboard.writeText('https://meow-world.vercel.app')
+      await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {}

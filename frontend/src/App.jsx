@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 import Header      from './components/Header'
 import FilterBar   from './components/FilterBar'
@@ -12,11 +12,35 @@ import ScrollTop   from './components/ScrollTop'
 import { usePhotos } from './hooks/usePhotos'
 import { useLikes  } from './hooks/useLikes'
 
+const KEY = import.meta.env.VITE_CAT_API_KEY
+
+// 사진 데이터 정규화 (URL 해시로 직접 열 때 사용)
+function normalizePhoto(d) {
+  return {
+    id:          'ca_' + d.id,
+    url:         d.url,
+    thumb:       d.url,
+    source:      'catapi',
+    author:      'TheCatAPI',
+    link:        d.url,
+    w:           d.width  || 500,
+    h:           d.height || 400,
+    breed:       d.breeds?.[0]?.name        || null,
+    title:       d.breeds?.[0]?.name ? `${d.breeds[0].name} 고양이` : '귀여운 고양이',
+    isGif:       d.url?.toLowerCase().endsWith('.gif') || false,
+    temperament: d.breeds?.[0]?.temperament  || null,
+    origin:      d.breeds?.[0]?.origin       || null,
+    description: d.breeds?.[0]?.description  || null,
+    life_span:   d.breeds?.[0]?.life_span    || null,
+    wikipedia:   d.breeds?.[0]?.wikipedia_url|| null,
+  }
+}
+
 export default function App() {
-  const [filter,      setFilter]      = useState('all')
-  const [category,    setCategory]    = useState('all')
-  const [modal,       setModal]       = useState(null)
-  const [toasts,      setToasts]      = useState([])
+  const [filter,       setFilter]       = useState('all')
+  const [category,     setCategory]     = useState('all')
+  const [modal,        setModal]        = useState(null)
+  const [toasts,       setToasts]       = useState([])
   const [showSettings, setShowSettings] = useState(false)
 
   const [hidden, setHidden] = useState(
@@ -27,10 +51,34 @@ export default function App() {
   )
 
   const { likes, likedPhotos, toggleLike } = useLikes()
-  const {
-    photos, loading, counts,
-    loadMore, refreshAll,
-  } = usePhotos(category)
+  const { photos, loading, counts, loadMore, refreshAll } = usePhotos(category)
+
+  // ── URL 해시로 사진 직접 열기 (공유 링크 수신) ──
+  useEffect(() => {
+    const hash = window.location.hash.slice(1)
+    if (!hash || hash.length < 3) return
+    fetch(`https://api.thecatapi.com/v1/images/${hash}?api_key=${KEY}`)
+      .then(r => r.json())
+      .then(d => { if (d?.id) setModal(normalizePhoto(d)) })
+      .catch(() => {})
+  }, [])
+
+  // ── 모달 열리면 URL 해시 갱신, 닫히면 초기화 ──
+  useEffect(() => {
+    if (modal) {
+      const rawId = modal.id.startsWith('ca_') ? modal.id.slice(3) : modal.id
+      window.history.replaceState(null, '', `#${rawId}`)
+    } else {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [modal])
+
+  // ── 뒤로가기 버튼 → 모달 닫기 ──────────────────
+  useEffect(() => {
+    const onPop = () => setModal(null)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   // ── toast helper ──────────────────────────────
   const addToast = useCallback((ico, msg) => {
@@ -39,7 +87,7 @@ export default function App() {
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2800)
   }, [])
 
-  // ── like handler (card + modal) ───────────────
+  // ── like handler ──────────────────────────────
   const handleLike = useCallback((id, photo) => {
     const wasLiked = !!likes[id]
     toggleLike(id, photo)
@@ -90,34 +138,15 @@ export default function App() {
     }
   }, [addToast])
 
-  // ── random cat ────────────────────────────────
-  const handleRandom = useCallback(async () => {
-    addToast('🎲', '랜덤 냥이 불러오는 중...')
-    try {
-      const key = import.meta.env.VITE_CAT_API_KEY
-      const res  = await fetch(`https://api.thecatapi.com/v1/images/search?api_key=${key}`)
-      const [d]  = await res.json()
-      setModal({
-        id: 'rnd_' + d.id, url: d.url, thumb: d.url, source: 'catapi',
-        author: 'TheCatAPI', link: d.url, w: d.width, h: d.height,
-        breed: d.breeds?.[0]?.name || null,
-        title: d.breeds?.[0]?.name ? `${d.breeds[0].name} 고양이 🐱` : '🎲 랜덤 귀여운 냥이',
-      })
-    } catch {
-      addToast('😿', '랜덤 냥이를 불러오지 못했어요')
-    }
-  }, [addToast])
-
   // ── filtered photos ───────────────────────────
   const filtered = (() => {
     if (filter === 'liked') {
       return Object.values(likedPhotos)
         .filter(p => !hidden.has(p.id) && !(p.breed && blockedBreeds.has(p.breed)))
-        .sort((a, b) => (b.likedAt || 0) - (a.likedAt || 0)) // 최근 좋아요 순
+        .sort((a, b) => (b.likedAt || 0) - (a.likedAt || 0))
     }
     return photos.filter(p =>
-      !hidden.has(p.id) &&
-      !(p.breed && blockedBreeds.has(p.breed))
+      !hidden.has(p.id) && !(p.breed && blockedBreeds.has(p.breed))
     )
   })()
 
