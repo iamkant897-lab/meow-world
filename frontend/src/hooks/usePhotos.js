@@ -94,9 +94,14 @@ function normalize(i) {
     link:  i.url,
     w:     i.width  || 500,
     h:     i.height || 400,
-    breed: i.breeds?.[0]?.name || null,
-    title: i.breeds?.[0]?.name ? `${i.breeds[0].name} 고양이` : '귀여운 고양이',
-    isGif: i.url?.toLowerCase().endsWith('.gif') || false,
+    breed:       i.breeds?.[0]?.name        || null,
+    title:       i.breeds?.[0]?.name ? `${i.breeds[0].name} 고양이` : '귀여운 고양이',
+    isGif:       i.url?.toLowerCase().endsWith('.gif') || false,
+    temperament: i.breeds?.[0]?.temperament  || null,
+    origin:      i.breeds?.[0]?.origin       || null,
+    description: i.breeds?.[0]?.description  || null,
+    life_span:   i.breeds?.[0]?.life_span    || null,
+    wikipedia:   i.breeds?.[0]?.wikipedia_url|| null,
   }
 }
 

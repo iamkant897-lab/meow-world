@@ -132,9 +132,11 @@ export default function App() {
       {modal && (
         <Modal
           photo={modal}
+          photos={filtered}
           likes={likes}
           onClose={() => setModal(null)}
           onLike={handleLike}
+          onNavigate={setModal}
         />
       )}
 
