@@ -125,7 +125,6 @@ export default function App() {
     <>
       <Header
         onRefresh={handleRefresh}
-        onRandom={handleRandom}
         onSettings={() => setShowSettings(true)}
       />
 
