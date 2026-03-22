@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index }) {
   const [hiding,    setHiding]    = useState(false)
   const [likeAnim,  setLikeAnim]  = useState(false)
   const [showHeart, setShowHeart] = useState(false)
+  const [loaded,    setLoaded]    = useState(false)
 
   const lastTouchRef   = useRef(0)
   const didDoubleTap   = useRef(false)
@@ -76,12 +77,19 @@ export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index
 
       {photo.isGif && <div className="gif-badge">GIF</div>}
 
-      <img
-        src={photo.thumb || photo.url}
-        alt={photo.title || '고양이'}
-        loading="lazy"
-        onError={e => { e.target.closest('.card').style.display = 'none' }}
-      />
+      <div
+        className="photo-img-wrap"
+        style={{ aspectRatio: `${photo.w || 4} / ${photo.h || 3}` }}
+      >
+        <img
+          src={photo.thumb || photo.url}
+          alt={photo.title || '고양이'}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={e => { e.target.closest('.card').style.display = 'none' }}
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.35s' }}
+        />
+      </div>
 
       <div className="card-overlay">
         {photo.breed && <div className="overlay-title">🐱 {photo.breed}</div>}
