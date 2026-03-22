@@ -161,7 +161,47 @@ body {
 .stats strong { color: var(--pink2); }
 
 .masonry { columns: 5 200px; column-gap: 12px; }
-@media(max-width:520px) { .masonry { columns: 2 140px; column-gap: 8px; } }
+
+/* ── MOBILE ────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* 헤더 작게 */
+  .header { padding: 8px 12px; }
+  .logo-paw { font-size: 1.5rem; }
+  .logo-name { font-size: 1.15rem; }
+  .logo-sub { display: none; }
+  .live-chip { display: none; }
+  .btn { padding: 7px 11px; font-size: .76rem; gap: 3px; }
+
+  /* sticky 위치 재조정 */
+  .filter-bar   { top: 52px; }
+  .category-bar { top: 91px; }
+
+  /* 카드 버튼 항상 보이게 (터치에선 hover 없음) */
+  .card-like { opacity: 1; width: 30px; height: 30px; font-size: .82rem; }
+  .card-hide { opacity: 1; width: 30px; height: 30px; font-size: .74rem; }
+
+  /* 갤러리 */
+  .masonry { columns: 2 140px; column-gap: 8px; }
+  .gallery-wrap { padding: 8px 8px 60px; }
+
+  /* 모달 */
+  .modal-box { border-radius: 18px; }
+  .modal-img-wrap { max-height: 50vh; }
+  .modal-img { max-height: 50vh; }
+  .modal-body { padding: 14px 16px 18px; }
+  .modal-actions { flex-wrap: wrap; }
+
+  /* 하단 스크롤 버튼 */
+  .scroll-top { bottom: 16px; right: 14px; width: 40px; height: 40px; }
+  .toast { font-size: .8rem; padding: 9px 16px; }
+}
+
+/* 터치 기기 공통 — hover 없는 환경에서 버튼 항상 표시 */
+@media (hover: none) {
+  .card-like { opacity: 1; }
+  .card-hide { opacity: 1; }
+  .card:hover { transform: none; box-shadow: var(--shadow); }
+}
 
 /* ── CARD ──────────────────────────────────────── */
 .card {
