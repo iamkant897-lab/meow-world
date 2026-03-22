@@ -5,17 +5,22 @@ const KEY = import.meta.env.VITE_CAT_API_KEY
 const BREED_IDS = {
   ragd: 'ragd', mcoo: 'mcoo', munc: 'munc',
   norw: 'norw', sibe: 'sibe', bali: 'bali', birm: 'birm',
+  ram:  'ram',  bslo: 'bslo', tang: 'tang', soma: 'soma',
 }
 
 // 품종 이름 → API breed_id 매핑
 const BREED_NAME_TO_ID = {
-  'Ragdoll': 'ragd',
-  'Maine Coon': 'mcoo',
-  'Munchkin': 'munc',
+  'Ragdoll':              'ragd',
+  'Maine Coon':           'mcoo',
+  'Munchkin':             'munc',
   'Norwegian Forest Cat': 'norw',
-  'Siberian': 'sibe',
-  'Balinese': 'bali',
-  'Birman': 'birm',
+  'Siberian':             'sibe',
+  'Balinese':             'bali',
+  'Birman':               'birm',
+  'Ragamuffin':           'ram',
+  'British Longhair':     'bslo',
+  'Turkish Angora':       'tang',
+  'Somali':               'soma',
 }
 
 // 좋아요한 사진에서 선호 품종 ID 추출 (상위 3개)
