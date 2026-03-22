@@ -105,15 +105,29 @@ function normalize(i) {
   }
 }
 
-async function fetchCatAPI(limit = 50, breedId = null, mimeType = null, requireBreeds = true) {
-  const breedParam  = breedId ? `&breed_ids=${breedId}` : ''
-  const breedsParam = (!breedId && requireBreeds) ? '&has_breeds=1' : ''
-  const mimeParam   = mimeType ? `&mime_types=${mimeType}` : ''
+async function fetchCatAPI(limit = 50, breedId = null, mimeType = null, requireBreeds = true, categoryId = null) {
+  const breedParam    = breedId    ? `&breed_ids=${breedId}`       : ''
+  const breedsParam   = (!breedId && !categoryId && requireBreeds) ? '&has_breeds=1' : ''
+  const mimeParam     = mimeType   ? `&mime_types=${mimeType}`     : ''
+  const categoryParam = categoryId ? `&category_ids=${categoryId}` : ''
   const res  = await fetch(
-    `https://api.thecatapi.com/v1/images/search?limit=${limit}&order=RAND${breedParam}${breedsParam}${mimeParam}&api_key=${KEY}`
+    `https://api.thecatapi.com/v1/images/search?limit=${limit}&order=RAND${breedParam}${breedsParam}${mimeParam}${categoryParam}&api_key=${KEY}`
   )
   const data = await res.json()
   return Array.isArray(data) ? data.map(normalize) : []
+}
+
+// TheCatAPI의 kittens 카테고리 ID를 한 번만 가져와서 캐시
+let kittenCatId = null
+async function getKittenCatId() {
+  if (kittenCatId) return kittenCatId
+  try {
+    const res  = await fetch(`https://api.thecatapi.com/v1/categories?api_key=${KEY}`)
+    const list = await res.json()
+    const found = Array.isArray(list) && list.find(c => c.name.toLowerCase() === 'kittens')
+    kittenCatId = found?.id || 5  // 못 찾으면 일반적으로 알려진 ID 5 사용
+  } catch { kittenCatId = 5 }
+  return kittenCatId
 }
 
 const PAGE = 12 // 한 번에 보여줄 장수
@@ -167,7 +181,12 @@ export function usePhotos(category = 'all') {
   // ── fetch & filter ────────────────────────────
   const fetchPhotos = useCallback(async (cat) => {
     if (cat === 'kitten') {
-      const batches = await Promise.all(KITTEN_BREEDS.map(b => fetchCatAPI(20, b)))
+      const catId = await getKittenCatId()
+      const batches = await Promise.all([
+        fetchCatAPI(40, null, null, false, catId),
+        fetchCatAPI(40, null, null, false, catId),
+        fetchCatAPI(20, null, 'gif', false, catId),  // 아기 고양이 움짤
+      ])
       return dedupFilter(shuffle(batches.flat()))
     }
 
