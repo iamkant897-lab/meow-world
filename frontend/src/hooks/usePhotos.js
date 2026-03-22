@@ -5,7 +5,7 @@ const KEY = import.meta.env.VITE_CAT_API_KEY
 const BREED_IDS = {
   ragd: 'ragd', mcoo: 'mcoo', munc: 'munc',
   norw: 'norw', sibe: 'sibe', bali: 'bali', birm: 'birm',
-  ram:  'ram',  bslo: 'bslo', tang: 'tang', soma: 'soma',
+  raga: 'raga', bslo: 'bslo', tang: 'tang', soma: 'soma',
 }
 
 // 품종 이름 → API breed_id 매핑
@@ -17,7 +17,7 @@ const BREED_NAME_TO_ID = {
   'Siberian':             'sibe',
   'Balinese':             'bali',
   'Birman':               'birm',
-  'Ragamuffin':           'ram',
+  'Ragamuffin':           'raga',
   'British Longhair':     'bslo',
   'Turkish Angora':       'tang',
   'Somali':               'soma',
