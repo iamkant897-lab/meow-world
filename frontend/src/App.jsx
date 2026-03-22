@@ -5,18 +5,19 @@ import FilterBar   from './components/FilterBar'
 import CategoryBar from './components/CategoryBar'
 import Gallery     from './components/Gallery'
 import Modal       from './components/Modal'
+import Settings    from './components/Settings'
 import Toast       from './components/Toast'
-import NewBanner   from './components/NewBanner'
 import ScrollTop   from './components/ScrollTop'
 
 import { usePhotos } from './hooks/usePhotos'
 import { useLikes  } from './hooks/useLikes'
 
 export default function App() {
-  const [filter,   setFilter]   = useState('all')
-  const [category, setCategory] = useState('all')
-  const [modal,    setModal]    = useState(null)
-  const [toasts,   setToasts]   = useState([])
+  const [filter,      setFilter]      = useState('all')
+  const [category,    setCategory]    = useState('all')
+  const [modal,       setModal]       = useState(null)
+  const [toasts,      setToasts]      = useState([])
+  const [showSettings, setShowSettings] = useState(false)
 
   const [hidden, setHidden] = useState(
     () => new Set(JSON.parse(localStorage.getItem('nyang_hidden') || '[]'))
@@ -50,6 +51,23 @@ export default function App() {
     await refreshAll()
     addToast('🔄', '새로운 고양이들을 불러왔어요!')
   }, [refreshAll, addToast])
+
+  // ── unblock breed ─────────────────────────────
+  const handleUnblock = useCallback((breed) => {
+    setBlockedBreeds(prev => {
+      const next = new Set(prev)
+      next.delete(breed)
+      localStorage.setItem('nyang_blocked_breeds', JSON.stringify([...next]))
+      return next
+    })
+    addToast('✅', `${breed} 차단 해제됐어요`)
+  }, [addToast])
+
+  const handleClearBlocks = useCallback(() => {
+    setBlockedBreeds(new Set())
+    localStorage.setItem('nyang_blocked_breeds', '[]')
+    addToast('✅', '차단 목록을 모두 해제했어요')
+  }, [addToast])
 
   // ── hide handler ──────────────────────────────
   const handleHide = useCallback((id, breed) => {
@@ -93,10 +111,9 @@ export default function App() {
   // ── filtered photos ───────────────────────────
   const filtered = (() => {
     if (filter === 'liked') {
-      // 저장된 사진 전체에서 보여줌 (세션 무관)
-      return Object.values(likedPhotos).filter(p =>
-        !hidden.has(p.id) && !(p.breed && blockedBreeds.has(p.breed))
-      )
+      return Object.values(likedPhotos)
+        .filter(p => !hidden.has(p.id) && !(p.breed && blockedBreeds.has(p.breed)))
+        .sort((a, b) => (b.likedAt || 0) - (a.likedAt || 0)) // 최근 좋아요 순
     }
     return photos.filter(p =>
       !hidden.has(p.id) &&
@@ -109,6 +126,7 @@ export default function App() {
       <Header
         onRefresh={handleRefresh}
         onRandom={handleRandom}
+        onSettings={() => setShowSettings(true)}
       />
 
       <FilterBar
@@ -127,6 +145,7 @@ export default function App() {
         onLike={handleLike}
         onHide={handleHide}
         onLoadMore={loadMore}
+        transitionKey={category + filter}
       />
 
       {modal && (
@@ -138,6 +157,15 @@ export default function App() {
           onLike={handleLike}
           onNavigate={setModal}
           onHide={handleHide}
+        />
+      )}
+
+      {showSettings && (
+        <Settings
+          blockedBreeds={blockedBreeds}
+          onUnblock={handleUnblock}
+          onClearAll={handleClearBlocks}
+          onClose={() => setShowSettings(false)}
         />
       )}
 

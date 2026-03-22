@@ -90,6 +90,7 @@ body {
 }
 .btn-grad:hover { transform: scale(1.06); box-shadow: 0 6px 24px rgba(255,77,148,.45); }
 .btn-sm { padding: 6px 14px; font-size: .78rem; }
+.btn-icon { padding: 8px 10px; font-size: 1rem; }
 
 /* ── FILTER BAR ────────────────────────────────── */
 .filter-bar {
@@ -451,6 +452,57 @@ body {
   text-decoration: none; margin-top: 2px;
 }
 .breed-wiki:hover { text-decoration: underline; }
+
+/* ── SETTINGS ──────────────────────────────────── */
+.settings-bg {
+  position: fixed; inset: 0;
+  background: rgba(90,45,110,.5); backdrop-filter: blur(14px);
+  z-index: 1100;
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fadeIn .22s ease;
+}
+.settings-panel {
+  background: var(--surface);
+  border-radius: 28px 28px 0 0;
+  border: 2px solid var(--border);
+  border-bottom: none;
+  width: 100%; max-width: 560px;
+  max-height: 80vh; overflow-y: auto;
+  padding: 24px 22px 40px;
+  animation: slideUp .3s cubic-bezier(.175,.885,.32,1.1);
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.settings-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 22px;
+}
+.settings-title { font-size: 1.1rem; font-weight: 900; color: var(--text); }
+.settings-section { margin-bottom: 24px; }
+.settings-section-title {
+  font-size: .88rem; font-weight: 800; color: var(--pink2);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.settings-badge {
+  background: var(--pink2); color: #fff;
+  font-size: .7rem; font-weight: 800;
+  padding: 1px 8px; border-radius: 20px;
+}
+.settings-empty { font-size: .85rem; color: var(--muted); font-weight: 700; padding: 8px 0; }
+.blocked-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.blocked-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 10px 14px;
+  font-size: .85rem; font-weight: 700; color: var(--text);
+}
+.unblock-btn {
+  background: linear-gradient(135deg, #ff4d94, #c97fe8);
+  color: #fff; border: none; border-radius: 20px;
+  padding: 4px 12px; font-size: .75rem; font-weight: 800;
+  cursor: pointer; transition: transform .15s;
+}
+.unblock-btn:hover { transform: scale(1.06); }
+.clear-all-btn { width: 100%; justify-content: center; }
 
 /* ── EMPTY ─────────────────────────────────────── */
 .empty { text-align: center; padding: 80px 20px; color: var(--muted); }

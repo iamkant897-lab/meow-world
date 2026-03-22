@@ -11,7 +11,7 @@ function getNumCols() {
   return 5
 }
 
-export default function Gallery({ photos, loading, likes, onCardClick, onLike, onHide, onLoadMore }) {
+export default function Gallery({ photos, loading, likes, onCardClick, onLike, onHide, onLoadMore, transitionKey }) {
   const triggerRef = useRef(null)
   const [numCols, setNumCols] = useState(getNumCols)
 
@@ -63,7 +63,7 @@ export default function Gallery({ photos, loading, likes, onCardClick, onLike, o
           <p>사진이 없어요</p>
         </div>
       ) : (
-        <div className="masonry-cols">
+        <div className="masonry-cols" key={transitionKey}>
           {columns.map((col, ci) => (
             <div key={ci} className="masonry-col">
               {col.map((p, j) => (

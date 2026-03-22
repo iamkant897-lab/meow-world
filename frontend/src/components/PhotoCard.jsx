@@ -3,10 +3,10 @@ import { useState, useRef } from 'react'
 export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index }) {
   const [hiding,    setHiding]    = useState(false)
   const [likeAnim,  setLikeAnim]  = useState(false)
-  const [showHeart, setShowHeart] = useState(false) // 더블탭 하트 이펙트
+  const [showHeart, setShowHeart] = useState(false)
 
-  const tapTimerRef = useRef(null)
-  const lastTapRef  = useRef(0)
+  const lastTouchRef   = useRef(0)
+  const didDoubleTap   = useRef(false)
   const delay = (index % 12) * 55
 
   function doLike() {
@@ -28,33 +28,36 @@ export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index
     doLike()
   }
 
-  // 더블탭 → 좋아요 / 싱글탭 → 모달
-  function handleCardClick() {
+  // touchstart로 더블탭 감지 — 딜레이 없이 즉시 반응
+  function handleTouchStart() {
     const now = Date.now()
-    if (now - lastTapRef.current < 280) {
-      clearTimeout(tapTimerRef.current)
-      lastTapRef.current = 0
+    if (now - lastTouchRef.current < 280) {
+      didDoubleTap.current = true
       doLike()
       setShowHeart(true)
       setTimeout(() => setShowHeart(false), 750)
-    } else {
-      lastTapRef.current = now
-      tapTimerRef.current = setTimeout(() => {
-        onClick(photo)
-      }, 280)
     }
+    lastTouchRef.current = now
+  }
+
+  // click은 모달 오픈 (더블탭이었으면 무시)
+  function handleCardClick() {
+    if (didDoubleTap.current) {
+      didDoubleTap.current = false
+      return
+    }
+    onClick(photo)
   }
 
   return (
     <div
       className={`card${hiding ? ' hiding' : ''}`}
       style={{ animationDelay: `${delay}ms` }}
+      onTouchStart={handleTouchStart}
       onClick={handleCardClick}
     >
-      {/* 더블탭 하트 이펙트 */}
       {showHeart && <div className="double-tap-heart">❤️</div>}
 
-      {/* 하트 — 좋아요 시 항상 표시 */}
       <button
         className={`card-like${liked ? ' liked' : ''}${likeAnim ? ' pop' : ''}`}
         onClick={handleLike}
@@ -63,7 +66,6 @@ export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index
         {liked ? '❤️' : '🤍'}
       </button>
 
-      {/* 숨기기 */}
       <button
         className="card-hide"
         onClick={handleHide}

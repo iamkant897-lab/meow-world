@@ -1,4 +1,4 @@
-export default function Header({ onRefresh, onRandom }) {
+export default function Header({ onRefresh, onRandom, onSettings }) {
   return (
     <header className="header">
       <div className="header-inner">
@@ -20,6 +20,9 @@ export default function Header({ onRefresh, onRandom }) {
           </button>
           <button className="btn btn-grad" onClick={onRandom}>
             🎲 랜덤 냥이
+          </button>
+          <button className="btn btn-ghost btn-icon" onClick={onSettings} title="설정">
+            ⚙️
           </button>
         </div>
       </div>
