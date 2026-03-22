@@ -38,19 +38,37 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
     }
   }
 
-  // 공유 버튼
+  // 공유 버튼 — 이미지 파일로 직접 공유 (카톡에서 사진으로 바로 보임)
   async function handleShare() {
-    if (navigator.share) {
+    // 1순위: 이미지 파일 다운로드 후 파일 공유
+    if (navigator.share && navigator.canShare) {
       try {
-        await navigator.share({ title: photo.title || '귀여운 고양이 🐱', url: photo.url })
-      } catch {}
-    } else {
-      try {
-        await navigator.clipboard.writeText(photo.url)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        const res  = await fetch(photo.url)
+        const blob = await res.blob()
+        const ext  = photo.isGif ? 'gif' : 'jpg'
+        const file = new File([blob], `nyang-${Date.now()}.${ext}`, { type: blob.type })
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: photo.title || '귀여운 고양이 🐱' })
+          return
+        }
       } catch {}
     }
+    // 2순위: 사이트 URL 공유 (OG 썸네일 뜸)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '🐱 냥월드 — 귀여운 고양이 갤러리',
+          url: 'https://meow-world.vercel.app',
+        })
+        return
+      } catch {}
+    }
+    // 3순위: 클립보드 복사
+    try {
+      await navigator.clipboard.writeText('https://meow-world.vercel.app')
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {}
   }
 
   return (
