@@ -237,6 +237,16 @@ body {
 .card:hover .card-hide { opacity: 1; }
 .card-hide:hover { transform: scale(1.22); background: rgba(220,50,80,.85); }
 
+/* GIF 배지 */
+.gif-badge {
+  position: absolute; bottom: 9px; left: 9px;
+  background: rgba(255,77,148,.88);
+  color: #fff; font-size: .65rem; font-weight: 800;
+  padding: 2px 7px; border-radius: 20px;
+  letter-spacing: .06em; z-index: 10;
+  pointer-events: none;
+}
+
 /* 숨기기 애니메이션 */
 .card.hiding {
   animation: fadeOut .38s ease forwards;

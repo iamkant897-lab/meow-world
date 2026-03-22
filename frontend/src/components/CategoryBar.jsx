@@ -8,6 +8,7 @@ export const CATEGORIES = [
   { id: 'sibe', label: '❄️ 시베리안'      },
   { id: 'bali', label: '🌸 발리니즈'      },
   { id: 'birm', label: '✨ 버만'          },
+  { id: 'gif',  label: '🎬 움짤'         },
 ]
 
 export default function CategoryBar({ active, onChange }) {

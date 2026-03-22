@@ -45,6 +45,8 @@ export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index
         🚫
       </button>
 
+      {photo.isGif && <div className="gif-badge">GIF</div>}
+
       <img
         src={photo.thumb || photo.url}
         alt={photo.title || '고양이'}

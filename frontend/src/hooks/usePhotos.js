@@ -72,14 +72,16 @@ function normalize(i) {
     h:     i.height || 400,
     breed: i.breeds?.[0]?.name || null,
     title: i.breeds?.[0]?.name ? `${i.breeds[0].name} 고양이` : '귀여운 고양이',
+    isGif: i.url?.toLowerCase().endsWith('.gif') || false,
   }
 }
 
-async function fetchCatAPI(limit = 50, breedId = null) {
+async function fetchCatAPI(limit = 50, breedId = null, mimeType = null, requireBreeds = true) {
   const breedParam  = breedId ? `&breed_ids=${breedId}` : ''
-  const breedsParam = breedId ? '' : '&has_breeds=1'
+  const breedsParam = (!breedId && requireBreeds) ? '&has_breeds=1' : ''
+  const mimeParam   = mimeType ? `&mime_types=${mimeType}` : ''
   const res  = await fetch(
-    `https://api.thecatapi.com/v1/images/search?limit=${limit}&order=RAND${breedParam}${breedsParam}&api_key=${KEY}`
+    `https://api.thecatapi.com/v1/images/search?limit=${limit}&order=RAND${breedParam}${breedsParam}${mimeParam}&api_key=${KEY}`
   )
   const data = await res.json()
   return Array.isArray(data) ? data.map(normalize) : []
@@ -100,12 +102,19 @@ export function usePhotos(category = 'all') {
     let batches
     if (cat === 'kitten') {
       batches = await Promise.all(KITTEN_BREEDS.map(b => fetchCatAPI(20, b)))
+    } else if (cat === 'gif') {
+      // 움짤 전용: breed 필터 없이 GIF만
+      batches = await Promise.all([
+        fetchCatAPI(20, null, 'gif', false),
+        fetchCatAPI(20, null, 'gif', false),
+      ])
     } else if (cat === 'all') {
       const preferred = getPreferredBreedIds()
-      // 기본 랜덤 + 선호 품종 추가 fetch
+      // 기본 랜덤 + 선호 품종 + GIF 조금 섞기
       const base = [fetchCatAPI(50, null), fetchCatAPI(50, null)]
       const pref = preferred.map(id => fetchCatAPI(40, id))
-      batches = await Promise.all([...base, ...pref])
+      const gifs = [fetchCatAPI(10, null, 'gif', false)]
+      batches = await Promise.all([...base, ...pref, ...gifs])
     } else {
       const breedId = BREED_IDS[cat] || null
       batches = await Promise.all([fetchCatAPI(50, breedId), fetchCatAPI(50, breedId)])
