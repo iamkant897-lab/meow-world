@@ -67,7 +67,7 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '🐱 냥월드 — 귀여운 고양이 갤러리',
+          title: '냥월드',
           url: 'https://meow-world.vercel.app',
         })
         return
