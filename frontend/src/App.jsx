@@ -137,6 +137,7 @@ export default function App() {
           onClose={() => setModal(null)}
           onLike={handleLike}
           onNavigate={setModal}
+          onHide={handleHide}
         />
       )}
 

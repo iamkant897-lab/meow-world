@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function Modal({ photo, photos, likes, onClose, onLike, onNavigate }) {
+export default function Modal({ photo, photos, likes, onClose, onLike, onNavigate, onHide }) {
   const liked = !!likes[photo.id]
   const [copied, setCopied] = useState(false)
 
@@ -122,6 +122,12 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
             </button>
             <button className="btn btn-ghost" onClick={handleShare}>
               {copied ? '✅ 복사됨!' : '📤 공유'}
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => { onHide(photo.id, photo.breed || null); onClose() }}
+            >
+              🚫 차단
             </button>
           </div>
         </div>
