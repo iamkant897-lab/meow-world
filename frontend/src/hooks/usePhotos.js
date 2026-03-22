@@ -232,9 +232,16 @@ export function usePhotos(category = 'all') {
     if (refillRef.current) return
     refillRef.current = true
     fetchPhotos(cat).then(fresh => {
-      const unseen  = filterUnseen(fresh, cat)
-      const pool    = unseen.length > 0 ? unseen : fresh
-      const deduped = pool.filter(p => !seenIdsRef.current.has(p.id))
+      const unseen = filterUnseen(fresh, cat)
+      const pool   = unseen.length > 0 ? unseen : fresh
+      let deduped  = pool.filter(p => !seenIdsRef.current.has(p.id))
+
+      // 다 봤으면 순환
+      if (deduped.length === 0) {
+        seenIdsRef.current = new Set()
+        deduped = pool
+      }
+
       deduped.forEach(p => seenIdsRef.current.add(p.id))
       bufferRef.current = [...bufferRef.current, ...deduped]
     }).catch(() => {}).finally(() => { refillRef.current = false })
@@ -291,10 +298,17 @@ export function usePhotos(category = 'all') {
       } else {
         // 버퍼 비었으면 새로 fetch
         setLoading(true)
-        const fresh   = await fetchPhotos(categoryRef.current)
-        const unseen  = filterUnseen(fresh, categoryRef.current)
-        const pool    = unseen.length >= PAGE ? unseen : fresh
-        const deduped = pool.filter(p => !seenIdsRef.current.has(p.id))
+        const fresh  = await fetchPhotos(categoryRef.current)
+        const unseen = filterUnseen(fresh, categoryRef.current)
+        const pool   = unseen.length >= PAGE ? unseen : fresh
+        let deduped  = pool.filter(p => !seenIdsRef.current.has(p.id))
+
+        // 이 품종 사진을 이번 세션에 다 봤으면 → 처음부터 순환
+        if (deduped.length === 0) {
+          seenIdsRef.current = new Set()
+          deduped = pool
+        }
+
         deduped.forEach(p => seenIdsRef.current.add(p.id))
         bufferRef.current = deduped.slice(PAGE)
         const shown = deduped.slice(0, PAGE)
