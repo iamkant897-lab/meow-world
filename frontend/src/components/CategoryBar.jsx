@@ -1,6 +1,5 @@
 export const CATEGORIES = [
   { id: 'all',  label: '🐱 전체'          },
-  { id: 'kitten', label: '🍼 아기 고양이' },
   { id: 'ragd', label: '🤍 랙돌'          },
   { id: 'mcoo', label: '🦁 메인쿤'        },
   { id: 'munc', label: '🐾 먼치킨'        },
