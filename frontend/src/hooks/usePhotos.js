@@ -118,6 +118,40 @@ async function fetchCatAPI(limit = 50, breedId = null, mimeType = null, requireB
 
 const PAGE = 12 // 한 번에 보여줄 장수
 
+// ── 본 사진 기록 (localStorage) ──────────────────
+const SEEN_KEY = 'nyang_seen_history'
+const COOLDOWN_ALL    = 7 * 24 * 60 * 60 * 1000  // 7일
+const COOLDOWN_BREED  = 3 * 24 * 60 * 60 * 1000  // 3일
+
+function getSeenHistory() {
+  try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '{}') } catch { return {} }
+}
+
+function cleanAndGetHistory() {
+  const history = getSeenHistory()
+  const now = Date.now()
+  const cleaned = {}
+  for (const [id, ts] of Object.entries(history)) {
+    if (now - ts < COOLDOWN_ALL) cleaned[id] = ts  // 7일 지난 건 삭제
+  }
+  localStorage.setItem(SEEN_KEY, JSON.stringify(cleaned))
+  return cleaned
+}
+
+function markSeen(photos) {
+  const history = getSeenHistory()
+  const now = Date.now()
+  photos.forEach(p => { history[p.id] = now })
+  localStorage.setItem(SEEN_KEY, JSON.stringify(history))
+}
+
+function filterUnseen(photos, category) {
+  const history = cleanAndGetHistory()
+  const cooldown = category === 'all' ? COOLDOWN_ALL : COOLDOWN_BREED
+  const now = Date.now()
+  return photos.filter(p => !history[p.id] || (now - history[p.id]) >= cooldown)
+}
+
 export function usePhotos(category = 'all') {
   const [photos,  setPhotos]  = useState([])
   const [loading, setLoading] = useState(false)
@@ -179,7 +213,9 @@ export function usePhotos(category = 'all') {
     if (refillRef.current) return
     refillRef.current = true
     fetchPhotos(cat).then(fresh => {
-      const deduped = fresh.filter(p => !seenIdsRef.current.has(p.id))
+      const unseen  = filterUnseen(fresh, cat)
+      const pool    = unseen.length > 0 ? unseen : fresh
+      const deduped = pool.filter(p => !seenIdsRef.current.has(p.id))
       deduped.forEach(p => seenIdsRef.current.add(p.id))
       bufferRef.current = [...bufferRef.current, ...deduped]
     }).catch(() => {}).finally(() => { refillRef.current = false })
@@ -191,10 +227,15 @@ export function usePhotos(category = 'all') {
     loadingRef.current = true
     setLoading(true)
     try {
-      const fresh = await fetchPhotos(cat)
-      fresh.forEach(p => seenIdsRef.current.add(p.id))
-      bufferRef.current = fresh.slice(PAGE)   // 나머지는 버퍼에
-      setPhotos(fresh.slice(0, PAGE))         // 처음엔 PAGE장만
+      const fresh   = await fetchPhotos(cat)
+      const unseen  = filterUnseen(fresh, cat)
+      // 안 본 사진이 너무 적으면 이미 본 것도 섞어서 보충
+      const pool    = unseen.length >= PAGE ? unseen : fresh
+      pool.forEach(p => seenIdsRef.current.add(p.id))
+      bufferRef.current = pool.slice(PAGE)
+      const shown = pool.slice(0, PAGE)
+      markSeen(shown)
+      setPhotos(shown)
     } catch (e) {
       console.error('loadInitial error', e)
     } finally {
@@ -222,6 +263,7 @@ export function usePhotos(category = 'all') {
       if (bufferRef.current.length > 0) {
         // 버퍼에 사진 있으면 바로 꺼내기
         const next = bufferRef.current.splice(0, PAGE)
+        markSeen(next)
         setPhotos(prev => [...prev, ...next])
         // 버퍼 부족하면 백그라운드에서 미리 보충
         if (bufferRef.current.length < PAGE * 2) {
@@ -231,10 +273,14 @@ export function usePhotos(category = 'all') {
         // 버퍼 비었으면 새로 fetch
         setLoading(true)
         const fresh   = await fetchPhotos(categoryRef.current)
-        const deduped = fresh.filter(p => !seenIdsRef.current.has(p.id))
+        const unseen  = filterUnseen(fresh, categoryRef.current)
+        const pool    = unseen.length >= PAGE ? unseen : fresh
+        const deduped = pool.filter(p => !seenIdsRef.current.has(p.id))
         deduped.forEach(p => seenIdsRef.current.add(p.id))
         bufferRef.current = deduped.slice(PAGE)
-        setPhotos(prev => [...prev, ...deduped.slice(0, PAGE)])
+        const shown = deduped.slice(0, PAGE)
+        markSeen(shown)
+        setPhotos(prev => [...prev, ...shown])
       }
     } catch (e) {
       console.error('loadMore error', e)
