@@ -21,12 +21,29 @@ export default function Gallery({ photos, loading, likes, onCardClick, onLike, o
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // 사진을 N열로 분배 — 새 사진은 항상 맨 아래에만 추가됨 (기존 사진 안 움직임)
-  const columns = useMemo(() =>
-    Array.from({ length: numCols }, (_, ci) =>
-      photos.filter((_, i) => i % numCols === ci)
-    )
-  , [photos, numCols])
+  // 가장 짧은 열에 배치 (Pinterest 방식) — 기존 사진 위치 고정
+  const colAssignRef  = useRef(new Map())
+  const colHeightsRef = useRef([])
+
+  const columns = useMemo(() => {
+    const reset = colHeightsRef.current.length !== numCols || photos.length === 0
+    if (reset) {
+      colAssignRef.current  = new Map()
+      colHeightsRef.current = new Array(numCols).fill(0)
+      if (photos.length === 0) return Array.from({ length: numCols }, () => [])
+    }
+    const cols = Array.from({ length: numCols }, () => [])
+    photos.forEach(photo => {
+      if (!colAssignRef.current.has(photo.id)) {
+        const h = colHeightsRef.current
+        const shortest = h.indexOf(Math.min(...h))
+        colAssignRef.current.set(photo.id, shortest)
+        h[shortest] += (photo.h || 400) / (photo.w || 500)
+      }
+      cols[colAssignRef.current.get(photo.id)].push(photo)
+    })
+    return cols
+  }, [photos, numCols])
 
   // 사진 수 바뀔 때마다 Observer 재등록
   useEffect(() => {

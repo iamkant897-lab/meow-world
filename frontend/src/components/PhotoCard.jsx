@@ -5,6 +5,7 @@ export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index
   const [likeAnim,  setLikeAnim]  = useState(false)
   const [showHeart, setShowHeart] = useState(false)
   const [loaded,    setLoaded]    = useState(false)
+  const [broken,    setBroken]    = useState(false)
 
   const lastTouchRef   = useRef(0)
   const didDoubleTap   = useRef(false)
@@ -81,14 +82,17 @@ export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index
         className="photo-img-wrap"
         style={{ aspectRatio: `${photo.w || 4} / ${photo.h || 3}` }}
       >
-        <img
-          src={photo.thumb || photo.url}
-          alt={photo.title || '고양이'}
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
-          onError={e => { e.target.closest('.card').style.display = 'none' }}
-          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.35s' }}
-        />
+        {broken ? (
+          <div className="photo-broken">😿</div>
+        ) : (
+          <img
+            src={photo.thumb || photo.url}
+            alt={photo.title || '고양이'}
+            onLoad={() => setLoaded(true)}
+            onError={() => setBroken(true)}
+            style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.35s' }}
+          />
+        )}
       </div>
 
       <div className="card-overlay">
