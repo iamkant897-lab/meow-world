@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 export default function Modal({ photo, photos, likes, onClose, onLike, onNavigate, onHide }) {
   const liked = !!likes[photo.id]
-  const [copied, setCopied] = useState(false)
+  const [copied,  setCopied]  = useState(false)
+  const [saving,  setSaving]  = useState(false)
 
   // 현재 사진 위치
   const currentIdx = photos ? photos.findIndex(p => p.id === photo.id) : -1
@@ -38,22 +39,31 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
     }
   }
 
-  // 공유 버튼 — 이미지 파일로 직접 공유 (카톡에서 사진으로 바로 보임)
-  async function handleShare() {
-    // 1순위: 이미지 파일 다운로드 후 파일 공유
-    if (navigator.share && navigator.canShare) {
-      try {
-        const res  = await fetch(photo.url)
-        const blob = await res.blob()
-        const ext  = photo.isGif ? 'gif' : 'jpg'
-        const file = new File([blob], `nyang-${Date.now()}.${ext}`, { type: blob.type })
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: photo.title || '귀여운 고양이 🐱' })
-          return
-        }
-      } catch {}
+  // 사진 저장 — 기기 갤러리에 저장 후 카톡 등에서 직접 공유 가능
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const res  = await fetch(photo.url)
+      const blob = await res.blob()
+      const ext  = photo.isGif ? 'gif' : 'jpg'
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href     = blobUrl
+      a.download = `냥이_${Date.now()}.${ext}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      // fetch 실패 시 새 탭에서 이미지 열기 (길게 눌러 저장 가능)
+      window.open(photo.url, '_blank')
+    } finally {
+      setSaving(false)
     }
-    // 2순위: 사이트 URL 공유 (OG 썸네일 뜸)
+  }
+
+  // 사이트 링크 공유
+  async function handleShare() {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -63,7 +73,6 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
         return
       } catch {}
     }
-    // 3순위: 클립보드 복사
     try {
       await navigator.clipboard.writeText('https://meow-world.vercel.app')
       setCopied(true)
@@ -138,8 +147,11 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
             >
               {liked ? '💔 취소' : '❤️ 좋아요'}
             </button>
+            <button className="btn btn-ghost" onClick={handleSave} disabled={saving}>
+              {saving ? '저장 중...' : '💾 사진 저장'}
+            </button>
             <button className="btn btn-ghost" onClick={handleShare}>
-              {copied ? '✅ 복사됨!' : '📤 공유'}
+              {copied ? '✅ 복사됨!' : '🔗 링크 공유'}
             </button>
             <button
               className="btn btn-ghost"
