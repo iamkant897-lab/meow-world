@@ -87,13 +87,16 @@ async function fetchCatAPI(limit = 50, breedId = null, mimeType = null, requireB
   return Array.isArray(data) ? data.map(normalize) : []
 }
 
+const PAGE = 12 // 한 번에 보여줄 장수
+
 export function usePhotos(category = 'all') {
   const [photos,  setPhotos]  = useState([])
   const [loading, setLoading] = useState(false)
 
   const loadingRef  = useRef(false)
   const categoryRef = useRef(category)
-  const seenIdsRef  = useRef(new Set()) // 이번 세션에서 본 사진 ID 전부
+  const seenIdsRef  = useRef(new Set())
+  const bufferRef   = useRef([]) // 불러왔지만 아직 미표시 사진 저장소
 
   useEffect(() => { categoryRef.current = category }, [category])
 
@@ -103,14 +106,12 @@ export function usePhotos(category = 'all') {
     if (cat === 'kitten') {
       batches = await Promise.all(KITTEN_BREEDS.map(b => fetchCatAPI(20, b)))
     } else if (cat === 'gif') {
-      // 움짤 전용: breed 필터 없이 GIF만
       batches = await Promise.all([
         fetchCatAPI(20, null, 'gif', false),
         fetchCatAPI(20, null, 'gif', false),
       ])
     } else if (cat === 'all') {
       const preferred = getPreferredBreedIds()
-      // 기본 랜덤 + 선호 품종 + GIF 조금 섞기
       const base = [fetchCatAPI(50, null), fetchCatAPI(50, null)]
       const pref = preferred.map(id => fetchCatAPI(40, id))
       const gifs = [fetchCatAPI(10, null, 'gif', false)]
@@ -131,6 +132,15 @@ export function usePhotos(category = 'all') {
     return out
   }, [])
 
+  // 버퍼 보충 (백그라운드)
+  const refillBuffer = useCallback((cat) => {
+    fetchPhotos(cat).then(fresh => {
+      const deduped = fresh.filter(p => !seenIdsRef.current.has(p.id))
+      deduped.forEach(p => seenIdsRef.current.add(p.id))
+      bufferRef.current = [...bufferRef.current, ...deduped]
+    }).catch(() => {})
+  }, [fetchPhotos])
+
   // ── initial load ──────────────────────────────
   const loadInitial = useCallback(async (cat) => {
     if (loadingRef.current) return
@@ -139,7 +149,8 @@ export function usePhotos(category = 'all') {
     try {
       const fresh = await fetchPhotos(cat)
       fresh.forEach(p => seenIdsRef.current.add(p.id))
-      setPhotos(fresh)
+      bufferRef.current = fresh.slice(PAGE)   // 나머지는 버퍼에
+      setPhotos(fresh.slice(0, PAGE))         // 처음엔 PAGE장만
     } catch (e) {
       console.error('loadInitial error', e)
     } finally {
@@ -151,28 +162,43 @@ export function usePhotos(category = 'all') {
   // ── reload when category changes ──────────────
   useEffect(() => {
     setPhotos([])
+    bufferRef.current = []
     seenIdsRef.current = new Set()
     loadingRef.current = false
     loadInitial(category)
   }, [category]) // eslint-disable-line
 
-  // ── load more (infinite scroll) ───────────────
+  // ── load more: 버퍼에서 PAGE장씩 꺼내기 ──────
   const loadMore = useCallback(async () => {
     if (loadingRef.current) return
+
+    // 버퍼에 사진 있으면 바로 꺼내기
+    if (bufferRef.current.length > 0) {
+      const next = bufferRef.current.splice(0, PAGE)
+      setPhotos(prev => [...prev, ...next])
+      // 버퍼 부족하면 백그라운드에서 미리 보충
+      if (bufferRef.current.length < PAGE * 2) {
+        refillBuffer(categoryRef.current)
+      }
+      return
+    }
+
+    // 버퍼 비었으면 새로 fetch
     loadingRef.current = true
     setLoading(true)
     try {
-      const fresh = await fetchPhotos(categoryRef.current)
+      const fresh   = await fetchPhotos(categoryRef.current)
       const deduped = fresh.filter(p => !seenIdsRef.current.has(p.id))
       deduped.forEach(p => seenIdsRef.current.add(p.id))
-      setPhotos(prev => [...prev, ...deduped])
+      bufferRef.current = deduped.slice(PAGE)
+      setPhotos(prev => [...prev, ...deduped.slice(0, PAGE)])
     } catch (e) {
       console.error('loadMore error', e)
     } finally {
       setLoading(false)
       loadingRef.current = false
     }
-  }, [fetchPhotos])
+  }, [fetchPhotos, refillBuffer])
 
   // ── 수동 새로고침: 새 사진 먼저, 봤던 사진 뒤로 ──
   const refreshAll = useCallback(async () => {
@@ -180,12 +206,13 @@ export function usePhotos(category = 'all') {
     loadingRef.current = true
     setLoading(true)
     try {
-      const fresh = await fetchPhotos(categoryRef.current)
-      const newPhotos  = fresh.filter(p => !seenIdsRef.current.has(p.id))
-      const oldPhotos  = fresh.filter(p =>  seenIdsRef.current.has(p.id))
-      const combined   = [...newPhotos, ...oldPhotos]
+      const fresh     = await fetchPhotos(categoryRef.current)
+      const newPhotos = fresh.filter(p => !seenIdsRef.current.has(p.id))
+      const oldPhotos = fresh.filter(p =>  seenIdsRef.current.has(p.id))
+      const combined  = [...newPhotos, ...oldPhotos]
       combined.forEach(p => seenIdsRef.current.add(p.id))
-      setPhotos(combined)
+      bufferRef.current = combined.slice(PAGE)
+      setPhotos(combined.slice(0, PAGE))
     } catch (e) {
       console.error('refreshAll error', e)
     } finally {

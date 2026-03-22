@@ -3,7 +3,8 @@ import { useState } from 'react'
 export default function PhotoCard({ photo, liked, onLike, onHide, onClick, index }) {
   const [hiding,   setHiding]   = useState(false)
   const [likeAnim, setLikeAnim] = useState(false)
-  const delay = Math.min(index * 25, 500)
+  // 배치 내 순서(0~11)로 stagger — 매 배치마다 0ms부터 시작
+  const delay = (index % 12) * 55
 
   function handleHide(e) {
     e.stopPropagation()
