@@ -141,18 +141,12 @@ body {
   flex-wrap: nowrap; padding-bottom: 2px;
 }
 .cat-btn { white-space: nowrap; flex-shrink: 0; }
-.cat-arrow {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  z-index: 10; width: 28px; height: 28px; border-radius: 50%;
-  border: 1.5px solid var(--border); background: rgba(255,240,247,.97);
-  font-size: 1.3rem; line-height: 1; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--primary); box-shadow: 0 2px 8px rgba(255,126,179,.2);
-  transition: background .15s;
+.cat-fade {
+  position: absolute; top: 0; bottom: 0; width: 48px; z-index: 10;
+  pointer-events: none;
 }
-.cat-arrow:hover { background: var(--primary); color: #fff; }
-.cat-arrow-left  { left: 4px; }
-.cat-arrow-right { right: 4px; }
+.cat-fade-left  { left: 0;  background: linear-gradient(to right, rgba(255,240,247,.95), transparent); }
+.cat-fade-right { right: 0; background: linear-gradient(to left,  rgba(255,240,247,.95), transparent); }
 .category-inner::-webkit-scrollbar { display: none; }
 .cat-btn {
   padding: 6px 16px; border-radius: 40px; border: 1.5px solid var(--border);

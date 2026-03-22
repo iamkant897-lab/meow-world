@@ -26,7 +26,7 @@ export default function CategoryBar({ active, onChange }) {
   const [canLeft,  setCanLeft]  = useState(false)
   const [canRight, setCanRight] = useState(false)
 
-  function updateArrows() {
+  function updateFade() {
     const el = innerRef.current
     if (!el) return
     setCanLeft(el.scrollLeft > 4)
@@ -36,24 +36,27 @@ export default function CategoryBar({ active, onChange }) {
   useEffect(() => {
     const el = innerRef.current
     if (!el) return
-    updateArrows()
-    el.addEventListener('scroll', updateArrows)
-    window.addEventListener('resize', updateArrows)
+    updateFade()
+    el.addEventListener('scroll', updateFade)
+    window.addEventListener('resize', updateFade)
     return () => {
-      el.removeEventListener('scroll', updateArrows)
-      window.removeEventListener('resize', updateArrows)
+      el.removeEventListener('scroll', updateFade)
+      window.removeEventListener('resize', updateFade)
     }
   }, [])
 
-  function scroll(dir) {
-    innerRef.current?.scrollBy({ left: dir * 240, behavior: 'smooth' })
+  // PC: 마우스 휠로 가로 스크롤
+  function handleWheel(e) {
+    if (!innerRef.current) return
+    e.preventDefault()
+    innerRef.current.scrollBy({ left: e.deltaY || e.deltaX, behavior: 'smooth' })
   }
 
   return (
     <div className="category-bar">
-      {canLeft  && <button className="cat-arrow cat-arrow-left"  onClick={() => scroll(-1)}>‹</button>}
-      {canRight && <button className="cat-arrow cat-arrow-right" onClick={() => scroll( 1)}>›</button>}
-      <div className="category-inner" ref={innerRef}>
+      {canLeft  && <div className="cat-fade cat-fade-left"  />}
+      {canRight && <div className="cat-fade cat-fade-right" />}
+      <div className="category-inner" ref={innerRef} onWheel={handleWheel}>
         {CATEGORIES.map(c => (
           <button
             key={c.id}
