@@ -122,10 +122,11 @@ export function usePhotos(category = 'all') {
   const [photos,  setPhotos]  = useState([])
   const [loading, setLoading] = useState(false)
 
-  const loadingRef  = useRef(false)
-  const categoryRef = useRef(category)
-  const seenIdsRef  = useRef(new Set())
-  const bufferRef   = useRef([]) // 불러왔지만 아직 미표시 사진 저장소
+  const loadingRef   = useRef(false)
+  const refillRef    = useRef(false) // 백그라운드 refill 중복 방지
+  const categoryRef  = useRef(category)
+  const seenIdsRef   = useRef(new Set())
+  const bufferRef    = useRef([]) // 불러왔지만 아직 미표시 사진 저장소
 
   useEffect(() => { categoryRef.current = category }, [category])
 
@@ -173,13 +174,15 @@ export function usePhotos(category = 'all') {
     return dedupFilter(shuffle(batches.flat()))
   }, [])
 
-  // 버퍼 보충 (백그라운드)
+  // 버퍼 보충 (백그라운드) — 동시에 1개만 실행
   const refillBuffer = useCallback((cat) => {
+    if (refillRef.current) return
+    refillRef.current = true
     fetchPhotos(cat).then(fresh => {
       const deduped = fresh.filter(p => !seenIdsRef.current.has(p.id))
       deduped.forEach(p => seenIdsRef.current.add(p.id))
       bufferRef.current = [...bufferRef.current, ...deduped]
-    }).catch(() => {})
+    }).catch(() => {}).finally(() => { refillRef.current = false })
   }, [fetchPhotos])
 
   // ── initial load ──────────────────────────────
@@ -210,34 +213,34 @@ export function usePhotos(category = 'all') {
   }, [category]) // eslint-disable-line
 
   // ── load more: 버퍼에서 PAGE장씩 꺼내기 ──────
+  // 모든 경로에 잠금 → 동시 실행 차단
   const loadMore = useCallback(async () => {
     if (loadingRef.current) return
-
-    // 버퍼에 사진 있으면 바로 꺼내기
-    if (bufferRef.current.length > 0) {
-      const next = bufferRef.current.splice(0, PAGE)
-      setPhotos(prev => [...prev, ...next])
-      // 버퍼 부족하면 백그라운드에서 미리 보충
-      if (bufferRef.current.length < PAGE * 2) {
-        refillBuffer(categoryRef.current)
-      }
-      return
-    }
-
-    // 버퍼 비었으면 새로 fetch
     loadingRef.current = true
-    setLoading(true)
+
     try {
-      const fresh   = await fetchPhotos(categoryRef.current)
-      const deduped = fresh.filter(p => !seenIdsRef.current.has(p.id))
-      deduped.forEach(p => seenIdsRef.current.add(p.id))
-      bufferRef.current = deduped.slice(PAGE)
-      setPhotos(prev => [...prev, ...deduped.slice(0, PAGE)])
+      if (bufferRef.current.length > 0) {
+        // 버퍼에 사진 있으면 바로 꺼내기
+        const next = bufferRef.current.splice(0, PAGE)
+        setPhotos(prev => [...prev, ...next])
+        // 버퍼 부족하면 백그라운드에서 미리 보충
+        if (bufferRef.current.length < PAGE * 2) {
+          refillBuffer(categoryRef.current)
+        }
+      } else {
+        // 버퍼 비었으면 새로 fetch
+        setLoading(true)
+        const fresh   = await fetchPhotos(categoryRef.current)
+        const deduped = fresh.filter(p => !seenIdsRef.current.has(p.id))
+        deduped.forEach(p => seenIdsRef.current.add(p.id))
+        bufferRef.current = deduped.slice(PAGE)
+        setPhotos(prev => [...prev, ...deduped.slice(0, PAGE)])
+      }
     } catch (e) {
       console.error('loadMore error', e)
     } finally {
       setLoading(false)
-      loadingRef.current = false
+      loadingRef.current = false // 항상 잠금 해제
     }
   }, [fetchPhotos, refillBuffer])
 
