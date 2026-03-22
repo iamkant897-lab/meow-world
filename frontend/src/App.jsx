@@ -56,7 +56,7 @@ export default function App() {
   // ── URL 해시로 사진 직접 열기 (공유 링크 수신) ──
   useEffect(() => {
     const hash = window.location.hash.slice(1)
-    if (!hash || hash.length < 3) return
+    if (!hash) return
     fetch(`https://api.thecatapi.com/v1/images/${hash}?api_key=${KEY}`)
       .then(r => r.json())
       .then(d => { if (d?.id) setModal(normalizePhoto(d)) })
