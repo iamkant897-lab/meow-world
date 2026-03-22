@@ -123,12 +123,6 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
             <button className="btn btn-ghost" onClick={handleShare}>
               {copied ? '✅ 복사됨!' : '📤 공유'}
             </button>
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => window.open(photo.link, '_blank')}
-            >
-              🔗 원본
-            </button>
           </div>
         </div>
       </div>
