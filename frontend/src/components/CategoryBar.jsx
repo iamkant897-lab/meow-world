@@ -1,3 +1,5 @@
+import { useRef, useState, useEffect } from 'react'
+
 export const CATEGORIES = [
   { id: 'all',  label: '🐱 전체'          },
   { id: 'gif',  label: '🎬 움짤'          },
@@ -20,9 +22,38 @@ export const CATEGORIES = [
 ]
 
 export default function CategoryBar({ active, onChange }) {
+  const innerRef = useRef(null)
+  const [canLeft,  setCanLeft]  = useState(false)
+  const [canRight, setCanRight] = useState(false)
+
+  function updateArrows() {
+    const el = innerRef.current
+    if (!el) return
+    setCanLeft(el.scrollLeft > 4)
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
+
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el) return
+    updateArrows()
+    el.addEventListener('scroll', updateArrows)
+    window.addEventListener('resize', updateArrows)
+    return () => {
+      el.removeEventListener('scroll', updateArrows)
+      window.removeEventListener('resize', updateArrows)
+    }
+  }, [])
+
+  function scroll(dir) {
+    innerRef.current?.scrollBy({ left: dir * 240, behavior: 'smooth' })
+  }
+
   return (
     <div className="category-bar">
-      <div className="category-inner">
+      {canLeft  && <button className="cat-arrow cat-arrow-left"  onClick={() => scroll(-1)}>‹</button>}
+      {canRight && <button className="cat-arrow cat-arrow-right" onClick={() => scroll( 1)}>›</button>}
+      <div className="category-inner" ref={innerRef}>
         {CATEGORIES.map(c => (
           <button
             key={c.id}
