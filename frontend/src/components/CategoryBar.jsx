@@ -12,6 +12,11 @@ export const CATEGORIES = [
   { id: 'bslo', label: '🇬🇧 브리티시 롱헤어' },
   { id: 'tang', label: '🤍 터키시 앙고라' },
   { id: 'soma', label: '🦊 소말리'        },
+  { id: 'sfol', label: '🙉 스코티쉬 폴드' },
+  { id: 'bsho', label: '🩶 브리티시 숏헤어' },
+  { id: 'beng', label: '🐆 뱅갈'          },
+  { id: 'rblu', label: '💙 러시안 블루'   },
+  { id: 'siam', label: '👑 샴'            },
 ]
 
 export default function CategoryBar({ active, onChange }) {

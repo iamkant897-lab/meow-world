@@ -6,6 +6,7 @@ const BREED_IDS = {
   ragd: 'ragd', mcoo: 'mcoo', munc: 'munc',
   norw: 'norw', sibe: 'sibe', bali: 'bali', birm: 'birm',
   raga: 'raga', bslo: 'bslo', tang: 'tang', soma: 'soma',
+  sfol: 'sfol', bsho: 'bsho', beng: 'beng', rblu: 'rblu', siam: 'siam',
 }
 
 // 품종 이름 → API breed_id 매핑
@@ -18,6 +19,11 @@ const BREED_NAME_TO_ID = {
   'Balinese':             'bali',
   'Birman':               'birm',
   'Ragamuffin':           'raga',
+  'Scottish Fold':        'sfol',
+  'British Shorthair':    'bsho',
+  'Bengal':               'beng',
+  'Russian Blue':         'rblu',
+  'Siamese':              'siam',
   'British Longhair':     'bslo',
   'Turkish Angora':       'tang',
   'Somali':               'soma',
@@ -76,13 +82,13 @@ function interleave(a, b) {
   return result
 }
 
-// 중복제거 + 제외 품종 필터
-function dedupFilter(arr) {
+// 중복제거 + 제외 품종 필터 (skipExclude=true면 특정 품종 탭용 — 단모종도 허용)
+function dedupFilter(arr, skipExclude = false) {
   const seen = new Set()
   const out  = []
   for (const p of arr) {
     if (seen.has(p.id)) continue
-    if (isExcluded(p.breed)) continue
+    if (!skipExclude && isExcluded(p.breed)) continue
     seen.add(p.id)
     out.push(p)
   }
@@ -226,10 +232,10 @@ export function usePhotos(category = 'all') {
       return interleave(photos, gifs)
     }
 
-    // 개별 품종 탭
+    // 개별 품종 탭 (단모종 포함 — skipExclude)
     const breedId = BREED_IDS[cat] || null
     const batches = await Promise.all([fetchCatAPI(50, breedId), fetchCatAPI(50, breedId)])
-    return dedupFilter(shuffle(batches.flat()))
+    return dedupFilter(shuffle(batches.flat()), true)
   }, [])
 
   // 버퍼 보충 (백그라운드) — 동시에 1개만 실행
