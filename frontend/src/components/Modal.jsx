@@ -99,6 +99,7 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
             <button className="modal-nav modal-nav-next" onClick={goNext}>›</button>
           )}
           <button className="modal-close-overlay" onClick={onClose}>✕</button>
+          <button className="modal-block-overlay" onClick={() => { onHide(photo.id, photo.breed || null); onClose() }}>🚫</button>
         </div>
 
         <div className="modal-body">
@@ -150,12 +151,6 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
             </button>
             <button className="btn btn-ghost" onClick={handleShare}>
               {copied ? '✅ 복사됨!' : '🔗 링크 공유'}
-            </button>
-            <button
-              className="btn btn-ghost"
-              onClick={() => { onHide(photo.id, photo.breed || null); onClose() }}
-            >
-              🚫 차단
             </button>
           </div>
         </div>
