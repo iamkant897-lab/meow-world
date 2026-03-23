@@ -371,6 +371,7 @@ export function usePhotos(category = 'all') {
   const refreshAll = useCallback(async () => {
     if (loadingRef.current) return
     loadingRef.current = true
+    setPhotos([])        // 로딩 화면 표시를 위해 먼저 초기화
     setLoading(true)
     try {
       const fresh     = await fetchPhotos(categoryRef.current)

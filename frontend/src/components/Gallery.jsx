@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import PhotoCard from './PhotoCard'
 
-const SKELETON_HEIGHTS = [220,300,190,340,260,210,250,310,185,270,230,200,320,280,210,250,290,195,265,225]
+const CAT_MSGS = [
+  '냥이들을 데려오는 중이에요',
+  '전세계 고양이 수배 중',
+  '귀여운 냥이 탐색 중',
+  '고양이들이 오는 중이에요',
+  '냥이 소환 준비 중',
+]
 
 function getNumCols() {
   const w = window.innerWidth
@@ -14,6 +20,7 @@ function getNumCols() {
 export default function Gallery({ photos, loading, likes, onCardClick, onLike, onHide, onLoadMore, transitionKey }) {
   const triggerRef = useRef(null)
   const [numCols, setNumCols] = useState(getNumCols)
+  const msgRef = useRef(CAT_MSGS[Math.floor(Math.random() * CAT_MSGS.length)])
 
   useEffect(() => {
     const onResize = () => setNumCols(getNumCols())
@@ -56,7 +63,7 @@ export default function Gallery({ photos, loading, likes, onCardClick, onLike, o
     return () => obs.disconnect()
   }, [photos.length, onLoadMore])
 
-  const showSkeletons = loading && photos.length === 0
+  const showLoading = loading && photos.length === 0
 
   return (
     <div className="gallery-wrap">
@@ -64,15 +71,16 @@ export default function Gallery({ photos, loading, likes, onCardClick, onLike, o
         총&nbsp;<strong>{photos.length.toLocaleString()}</strong>&nbsp;장의 고양이 사진
       </div>
 
-      {showSkeletons ? (
-        <div className="masonry-cols">
-          {Array.from({ length: numCols }, (_, ci) => (
-            <div key={ci} className="masonry-col">
-              {SKELETON_HEIGHTS.filter((_, i) => i % numCols === ci).map((h, i) => (
-                <div key={i} className="skel" style={{ height: h }} />
-              ))}
-            </div>
-          ))}
+      {showLoading ? (
+        <div className="cat-loading">
+          <div className="cat-loading-icon">🐱</div>
+          <div className="cat-loading-text">
+            {msgRef.current}
+            <span className="cat-loading-dots">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </div>
+          <div className="cat-loading-sub">잠시만 기다려 주세요 🐾</div>
         </div>
       ) : photos.length === 0 ? (
         <div className="empty">
