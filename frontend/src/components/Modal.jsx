@@ -98,13 +98,11 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
           {hasNext && (
             <button className="modal-nav modal-nav-next" onClick={goNext}>›</button>
           )}
+          <button className="modal-close-overlay" onClick={onClose}>✕</button>
         </div>
 
         <div className="modal-body">
-          <div className="modal-row">
-            <div className="modal-title">{photo.title || '귀여운 고양이 🐱'}</div>
-            <button className="close-btn" onClick={onClose}>✕</button>
-          </div>
+          <div className="modal-title">{photo.title || '귀여운 고양이 🐱'}</div>
 
           {/* 품종 상세 정보 */}
           {(photo.origin || photo.temperament || photo.life_span) && (
