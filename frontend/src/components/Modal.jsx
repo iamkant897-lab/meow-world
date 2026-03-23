@@ -89,6 +89,11 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
     >
       <div className="modal-box">
 
+        {/* 모달 상단 헤더: 닫기 버튼 */}
+        <div className="modal-header">
+          <button className="modal-close-btn" onClick={onClose}>✕</button>
+        </div>
+
         {/* 이미지 + 좌우 네비게이션 */}
         <div className="modal-img-wrap">
           {hasPrev && (
@@ -98,7 +103,6 @@ export default function Modal({ photo, photos, likes, onClose, onLike, onNavigat
           {hasNext && (
             <button className="modal-nav modal-nav-next" onClick={goNext}>›</button>
           )}
-          <button className="modal-close-overlay" onClick={onClose}>✕</button>
           <button className="modal-block-overlay" onClick={() => { onHide(photo.id, photo.breed || null); onClose() }}>🚫</button>
         </div>
 

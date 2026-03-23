@@ -2,7 +2,7 @@ export default function Header({ onRefresh, onSettings }) {
   return (
     <header className="header">
       <div className="header-inner">
-        <div className="logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <div className="logo" onClick={onRefresh} title="클릭하면 새로고침" style={{ cursor: 'pointer' }}>
           <span className="logo-paw">🐱</span>
           <div>
             <div className="logo-name">냥월드</div>

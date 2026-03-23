@@ -117,15 +117,19 @@ function normalize(i) {
 }
 
 async function fetchCatAPI(limit = 50, breedId = null, mimeType = null, requireBreeds = true, categoryId = null) {
-  const breedParam    = breedId    ? `&breed_ids=${breedId}`       : ''
-  const breedsParam   = (!breedId && !categoryId && requireBreeds) ? '&has_breeds=1' : ''
-  const mimeParam     = mimeType   ? `&mime_types=${mimeType}`     : ''
-  const categoryParam = categoryId ? `&category_ids=${categoryId}` : ''
-  const res  = await fetch(
-    `https://api.thecatapi.com/v1/images/search?limit=${limit}&order=RAND${breedParam}${breedsParam}${mimeParam}${categoryParam}&api_key=${KEY}`
-  )
-  const data = await res.json()
-  return Array.isArray(data) ? data.map(normalize) : []
+  try {
+    const breedParam    = breedId    ? `&breed_ids=${breedId}`       : ''
+    const breedsParam   = (!breedId && !categoryId && requireBreeds) ? '&has_breeds=1' : ''
+    const mimeParam     = mimeType   ? `&mime_types=${mimeType}`     : ''
+    const categoryParam = categoryId ? `&category_ids=${categoryId}` : ''
+    const res  = await fetch(
+      `https://api.thecatapi.com/v1/images/search?limit=${limit}&order=RAND${breedParam}${breedsParam}${mimeParam}${categoryParam}&api_key=${KEY}`
+    )
+    const data = await res.json()
+    return Array.isArray(data) ? data.map(normalize) : []
+  } catch {
+    return []   // 네트워크 오류 시 빈 배열 반환 (Promise.all 전체 실패 방지)
+  }
 }
 
 // TheCatAPI의 kittens 카테고리 ID를 한 번만 가져와서 캐시
@@ -264,7 +268,12 @@ export function usePhotos(category = 'all') {
     loadingRef.current = true
     setLoading(true)
     try {
-      const fresh   = await fetchPhotos(cat)
+      let fresh   = await fetchPhotos(cat)
+      // 첫 로드 실패(빈 결과)면 1초 후 한 번 더 시도
+      if (fresh.length === 0) {
+        await new Promise(r => setTimeout(r, 1000))
+        fresh = await fetchPhotos(cat)
+      }
       const unseen  = filterUnseen(fresh, cat)
       // 안 본 사진이 너무 적으면 이미 본 것도 섞어서 보충
       const pool    = unseen.length >= PAGE ? unseen : fresh
