@@ -45,9 +45,9 @@ export default function Gallery({ photos, loading, likes, onCardClick, onLike, o
     return cols
   }, [photos, numCols])
 
-  // 사진 수 바뀔 때마다 Observer 재등록
+  // 사진 수 바뀔 때마다 Observer 재등록 (초기 로딩 중엔 건드리지 않음)
   useEffect(() => {
-    if (!triggerRef.current) return
+    if (!triggerRef.current || photos.length === 0) return
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) onLoadMore() },
       { rootMargin: '150px' }
