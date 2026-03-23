@@ -262,33 +262,57 @@ export function usePhotos(category = 'all') {
     }).catch(() => {}).finally(() => { refillRef.current = false })
   }, [fetchPhotos])
 
+  // ── 빠른 첫 화면용 fetch (2콜만) ──────────────
+  const fetchPhotosQuick = useCallback(async (cat) => {
+    if (cat === 'all') {
+      const [photos, gifs] = await Promise.all([
+        fetchCatAPI(50, null),
+        fetchCatAPI(30, null, 'gif', false),
+      ])
+      const p = dedupFilter(shuffle(photos))
+      const g = dedupFilter(shuffle(gifs))
+      return interleave(p, g)
+    }
+    if (cat === 'gif') {
+      return dedupFilter(shuffle(await fetchCatAPI(50, null, 'gif', false)))
+    }
+    const breedId = BREED_IDS[cat] || null
+    return dedupFilter(shuffle(await fetchCatAPI(50, breedId)), true)
+  }, [])
+
   // ── initial load ──────────────────────────────
+  // 1단계: 빠른 2콜 → 바로 표시
+  // 2단계: 백그라운드에서 풀 fetch → 버퍼 채우기
   const loadInitial = useCallback(async (cat) => {
     if (loadingRef.current) return
     loadingRef.current = true
     setLoading(true)
     try {
-      let fresh   = await fetchPhotos(cat)
-      // 첫 로드 실패(빈 결과)면 1초 후 한 번 더 시도
-      if (fresh.length === 0) {
-        await new Promise(r => setTimeout(r, 1000))
-        fresh = await fetchPhotos(cat)
-      }
-      const unseen  = filterUnseen(fresh, cat)
-      // 안 본 사진이 너무 적으면 이미 본 것도 섞어서 보충
-      const pool    = unseen.length >= PAGE ? unseen : fresh
-      pool.forEach(p => seenIdsRef.current.add(p.id))
-      bufferRef.current = pool.slice(PAGE)
-      const shown = pool.slice(0, PAGE)
-      markSeen(shown)
-      setPhotos(shown)
+      // 1단계: 빠른 로드 (2콜)
+      const quick  = await fetchPhotosQuick(cat)
+      const pool1  = quick.length > 0 ? quick : await fetchPhotosQuick(cat)
+      const unseen1 = filterUnseen(pool1, cat)
+      const show1   = (unseen1.length >= PAGE ? unseen1 : pool1).slice(0, PAGE)
+      show1.forEach(p => seenIdsRef.current.add(p.id))
+      markSeen(show1)
+      setPhotos(show1)
+      setLoading(false)
+      loadingRef.current = false
+
+      // 2단계: 백그라운드에서 풀 fetch → 버퍼 보충
+      fetchPhotos(cat).then(fresh => {
+        const unseen = filterUnseen(fresh, cat)
+        const pool   = unseen.length > 0 ? unseen : fresh
+        const deduped = pool.filter(p => !seenIdsRef.current.has(p.id))
+        deduped.forEach(p => seenIdsRef.current.add(p.id))
+        bufferRef.current = deduped
+      }).catch(() => {})
     } catch (e) {
       console.error('loadInitial error', e)
-    } finally {
       setLoading(false)
       loadingRef.current = false
     }
-  }, [fetchPhotos])
+  }, [fetchPhotos, fetchPhotosQuick])
 
   // ── reload when category changes ──────────────
   useEffect(() => {
