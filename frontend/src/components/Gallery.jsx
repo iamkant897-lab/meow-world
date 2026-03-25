@@ -57,7 +57,7 @@ export default function Gallery({ photos, loading, likes, onCardClick, onLike, o
     if (!triggerRef.current || photos.length === 0) return
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) onLoadMore() },
-      { rootMargin: '150px' }
+      { rootMargin: '600px' }
     )
     obs.observe(triggerRef.current)
     return () => obs.disconnect()

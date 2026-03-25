@@ -335,16 +335,16 @@ export function usePhotos(category = 'all') {
         const next = bufferRef.current.splice(0, PAGE)
         markSeen(next)
         setPhotos(prev => [...prev, ...next])
-        // 버퍼 부족하면 백그라운드에서 미리 보충
-        if (bufferRef.current.length < PAGE * 2) {
+        // 버퍼 부족하면 백그라운드에서 미리 보충 (더 일찍 시작)
+        if (bufferRef.current.length < PAGE * 4) {
           refillBuffer(categoryRef.current)
         }
       } else {
-        // 버퍼 비었으면 새로 fetch
+        // 버퍼 비었으면 빠른 2콜로 먼저 표시 후 백그라운드 보충
         setLoading(true)
-        const fresh  = await fetchPhotos(categoryRef.current)
-        const unseen = filterUnseen(fresh, categoryRef.current)
-        const pool   = unseen.length >= PAGE ? unseen : fresh
+        const quick  = await fetchPhotosQuick(categoryRef.current)
+        const unseen = filterUnseen(quick, categoryRef.current)
+        const pool   = unseen.length >= PAGE ? unseen : quick
         let deduped  = pool.filter(p => !seenIdsRef.current.has(p.id))
 
         // 이 품종 사진을 이번 세션에 다 봤으면 → 처음부터 순환
@@ -358,6 +358,8 @@ export function usePhotos(category = 'all') {
         const shown = deduped.slice(0, PAGE)
         markSeen(shown)
         setPhotos(prev => [...prev, ...shown])
+        // 백그라운드에서 버퍼 보충
+        refillBuffer(categoryRef.current)
       }
     } catch (e) {
       console.error('loadMore error', e)
